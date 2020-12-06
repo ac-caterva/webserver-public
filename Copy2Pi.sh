@@ -19,7 +19,7 @@ then
 	echo "Kopiere eth0_start_192_168_0_50.sh" 
 fi
 
-sudo cp /home/pi/Git-Clones/webserver/usr_local_bin/eth0_start_192_168_0_50.sh /usr/local/bin
+sudo cp /home/pi/Git-Clones/webserver-public/usr_local_bin/eth0_start_192_168_0_50.sh /usr/local/bin
 sudo chown root:root /usr/local/bin/eth0_start_192_168_0_50.sh
 sudo chmod 755 /usr/local/bin/eth0_start_192_168_0_50.sh
 

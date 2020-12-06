@@ -11,7 +11,7 @@ fi
 
 # Kopiere Scripte zur Analyse auf die Caterva
 echo "%START% - Kopiere Scripte zur Analyse auf die Caterva"
-cd /home/pi/Git-Clones/webserver/var_caterva/scripts/analysis
+cd /home/pi/Git-Clones/webserver-public/var_caterva/scripts/analysis
 scp -o StrictHostKeyChecking=no *.sh admin@caterva:bin
 echo "%END%   - Kopiere Scripte zur Analyse auf die Caterva"
  

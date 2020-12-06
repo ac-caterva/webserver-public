@@ -13,7 +13,7 @@ fi
 
 # # Kopiere Scripte des Webservers
 # echo "%START% - Kopiere Scripte des Webservers /var/www"
-# cd /home/pi/Git-Clones/webserver/var_www
+# cd /home/pi/Git-Clones/webserver-public/var_www
 # tar ${tar_opt} - caterva caterva-phyton | ( cd /var/www ; tar xf - )
 
 # sudo chgrp www-data /var/www/caterva-phyton/scripts/*
@@ -26,7 +26,7 @@ fi
 
 # Kopiere Scripte um Daten von der Caterva zu kopieren
 echo "%START% - Kopiere Scripte um Daten von der Caterva zu kopieren /var/caterva"
-cd /home/pi/Git-Clones/webserver/var_caterva
+cd /home/pi/Git-Clones/webserver-public/var_caterva
 tar ${tar_opt} - . | ( cd /var/caterva ; tar xf -)
 chmod 754 /var/caterva/scripts/*.sh
 chmod 754 /var/caterva/scripts/fhem/*.py
@@ -44,7 +44,7 @@ then
 fi
 
 ## kopiere mittels einpacken als tar und entpacken
-cd /home/pi/Git-Clones/webserver/opt_fhem
+cd /home/pi/Git-Clones/webserver-public/opt_fhem
 tar ${tar_opt} - . | ( cd /opt/fhem ; sudo tar xf -)
 
 ## Restauriere /opt/fhem/FHEM/00_Private.cfg
