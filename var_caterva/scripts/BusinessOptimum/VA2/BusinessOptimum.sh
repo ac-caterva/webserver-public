@@ -45,7 +45,7 @@
 # date +%s												# Determine current time
 # swarmBcSend "CPOL1.OffsetStart.setVal=1604344838" 	# Start
 
-# Siegfried Quinger - VA20_2020-12-05_12.00
+# Siegfried Quinger - VA20_2020-12-05_12.00 #Änderung auf webserver_public
 ### END INFO
 
 
