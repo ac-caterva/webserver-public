@@ -2,7 +2,7 @@
 #
 #
 # Aktualisiere das lokale Repository
-/home/pi/Git-Clones/webserver-public/GetChangesFromGitHub.sh
+# /home/pi/Git-Clones/webserver-public/GetChangesFromGitHub.sh
 
 # Kopiere Daten auf den Apache Server (inkl. FHEM)
 /home/pi/Git-Clones/webserver-public/Copy2ApacheServer.sh
