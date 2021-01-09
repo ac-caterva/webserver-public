@@ -28,6 +28,13 @@ fi
 echo "%START% - Kopiere Scripte um Daten von der Caterva zu kopieren /var/caterva"
 cd /home/pi/Git-Clones/webserver-public/var_caterva
 tar ${tar_opt} - . | ( cd /var/caterva ; tar xf -)
+
+# neue copy_log.sh Crontab Eintrag manuell aendern: 
+# Copy Caterva log file invoiceLog.csv every minute
+# * * * * * /var/caterva/scripts/copy_log.sh
+#
+cp /var/caterva/scripts/invoicelog_kopieren/copy_log.sh /var/caterva/scripts/
+
 chmod 754 /var/caterva/scripts/*.sh
 chmod 754 /var/caterva/scripts/fhem/*.py
 echo "%END% - Kopiere Scripte um Daten von der Caterva zu kopieren" ; echo ""
