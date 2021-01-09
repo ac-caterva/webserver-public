@@ -2,6 +2,7 @@ UPD 2021-01-08_14:57:27 1907    opt_fhem/FHEM/00_BusinessOptimum_Parameter.cfg
 UPD 2021-01-06_14:08:19 48073   opt_fhem/FHEM/00_Caterva_ESS.cfg
 UPD 2020-05-02_21:39:06 462     opt_fhem/FHEM/00_Private.cfg
 UPD 2020-04-03_23:04:19 4914    opt_fhem/FHEM/00_SYSMON.cfg
+UPD 2021-01-09_11:21:48 49124   opt_fhem/FHEM/99_myUtils.pm
 UPD 2021-01-06_14:07:36 4096    opt_fhem/fhem.cfg
 UPD 2020-04-17_12:35:49 516     opt_fhem/www/gplot/SVG_ESS_GPLOT_History.gplot
 UPD 2021-01-08_15:41:02 437     opt_fhem/www/gplot/SVG_ESS_GPLOT_LOAD.gplot
