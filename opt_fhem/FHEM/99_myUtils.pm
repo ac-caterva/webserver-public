@@ -18,6 +18,58 @@ myUtils_Initialize($$)
 # Enter you functions below _this_ line.
 
 
+sub 
+readfromcaterva_BusinessOptimum_config()
+{ 
+
+#my $config_skalar  = `tail -1 /opt/fhem/log/BusinessOptimum.config_caterva`;
+my $config_skalar = `ssh admin\@caterva "tail -1 /home/admin/bin/BusinessOptimum.config"`;
+my @config_array=split(/\;/,$config_skalar);
+my $new_counter_increment = $config_array[12]+$config_array[13];
+
+Log 1, "Von Caterva eingelesene BO Config: $config_skalar";
+Log 1, "Lokal vor  Update:                  ".ReadingsVal("write_settings","Data","999");
+
+
+if ($config_array[0] ne ReadingsNum("P_in_W_chargeStandbyThreshold","state",0)) {fhem("set P_in_W_chargeStandbyThreshold $config_array[0]")};
+if ($config_array[1] ne ReadingsNum("P_in_W_chargeStandbyThreshold_hyst","state",0)) {fhem("set P_in_W_chargeStandbyThreshold_hyst $config_array[1]")};
+if ($config_array[2] ne ReadingsNum("P_in_W_dischargeStandbyThreshold","state",0)) {fhem("set P_in_W_dischargeStandbyThreshold $config_array[2]")};
+if ($config_array[3] ne ReadingsNum("P_in_W_dischargeStandbyThreshold_delay","state",0)) {fhem("set P_in_W_dischargeStandbyThreshold_delay $config_array[3]")};
+if ($config_array[4] ne ReadingsNum("P_in_W_dischargeStandbyThreshold_hyst","state",0)) {fhem("set P_in_W_dischargeStandbyThreshold_hyst $config_array[4]")};
+if ($config_array[5] ne ReadingsNum("SoC_max","state",0)) {fhem("set SoC_max $config_array[5]")};
+if ($config_array[6] ne ReadingsNum("SoC_charge","state",0)) {fhem("set SoC_charge $config_array[6]")};
+if ($config_array[7] ne ReadingsNum("SoC_discharge","state",0)) {fhem("set SoC_discharge $config_array[7]")};
+if ($config_array[8] ne ReadingsNum("SoC_min","state",0)) {fhem("set SoC_min $config_array[8]")};
+if ($config_array[9] ne ReadingsNum("SoC_err","state",0)) {fhem("set SoC_err $config_array[9]")};
+if ($config_array[10] ne ReadingsNum("counter_discharge_to_standby_max","state",0)) {fhem("set counter_discharge_to_standby_max $config_array[10]")};
+if ($config_array[11] ne ReadingsNum("counter_standby_to_discharge_max","state",0)) {fhem("set counter_standby_to_discharge_max $config_array[11]")};
+if ($new_counter_increment ne ReadingsNum("counter_increment","state",0)) {fhem("set counter_increment $new_counter_increment")};
+if ($config_array[14] == 112) {fhem("
+	set system_initialization DEAKTIVIERT;
+	
+	")} else {fhem("
+	set system_initialization AKTIV;
+
+	")};
+
+
+if ($config_array[15] ne ReadingsVal("ECS3_configuration","state","999")) {fhem("set ECS3_configuration $config_array[15]")};
+if ($config_array[16] == 1) {fhem("
+	set BusinessOptimum_BOS BusinessOptimum_standalone;
+
+	")}
+else {fhem("
+	set BusinessOptimum_BOS BusinessOptimumStarter;
+
+	")}
+Log 1, "Lokal nach Update:                  ".ReadingsVal("write_settings","Data","999");
+}
+
+#	setreading system_initialization Initstatus 112;
+#	setreading system_initialization Initstatus 1112;
+#	setreading BusinessOptimum_BOS Initstatus 1;
+#	setreading BusinessOptimum_BOS Initstatus 0;
+
 #########################################################################
 # Unterprogramme zur Umwandlung der Fehlerbits in Klartext
 # Aufruf: z.B.  {return_WarAlm_Failures(ReadingsVal("SwDER_LLN0","WarAlm","0"))}
@@ -683,6 +735,180 @@ addToLog($filename, "$timestamp4 03: $stat30_ESS_counter_level_discharge_in_WhDa
 }
 
 
+
+sub
+Configuration_Check()
+{
+
+fhem("set Configuration_Check ok");
+
+
+if(ReadingsVal("P_in_W_dischargeStandbyThreshold_delay","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("P_in_W_dischargeStandbyThreshold_delay","check2","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+
+if(ReadingsVal("P_in_W_dischargeStandbyThreshold_hyst","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("P_in_W_chargeStandbyThreshold","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("P_in_W_chargeStandbyThreshold_hyst","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("P_in_W_chargeStandbyThreshold_hyst","check2","999") eq "nok"){fhem("set Configuration_Check nok")};
+ 	
+
+if(ReadingsVal("SoC_max","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("SoC_max","check2","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("SoC_charge","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("SoC_charge","check2","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("SoC_discharge","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("SoC_discharge","check2","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("SoC_discharge","check3","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("SoC_min","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+if(ReadingsVal("SoC_min","check2","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("SoC_err","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+if(ReadingsVal("ECS3_configuration","check1","999") eq "nok"){fhem("set Configuration_Check nok")};
+
+}
+
+
+sub 
+create_BusinessOptimum_config()
+{
+my $string = "#P_in_W_chargeStandbyThreshold:				Charging only, when \"P_in_W_chargeStandbyThreshold\" \'exceeded\'
+#P_in_W_chargeStandbyThreshold_hyst:       	Charging routine will stop, when \"P_in_W_chargeStandbyThreshold_hyst\" has been reached
+#P_in_W_dischargeStandbyThreshold:			Discharging immediately, when \"P_in_W_dischargeStandbyThreshold\" exceeded
+#P_in_W_dischargeStandbyThreshold_delay:	Discharging only, when \"P_in_W_dischargeStandbyThreshold_delay\" has been exceeded > \"counter_standby_to_discharge_max\"
+#P_in_W_dischargeStandbyThreshold_hyst:		Discharging routine will stop, when \"P_in_W_dischargeStandbyThreshold_hyst\" has been reached
+#
+#SoC_max:									Soc ... max. up to charging will be possible; shall not exceed 90; as this is the limit of other caterva parameters
+#SoC_charge:								SoC ... enable re-charging (ChargedFlag is reset to \"0\")
+#SoC_discharge:								SoC ... set minimum value of SoC; beyond that only <<charging>> is possible; limit by Caterva: Soc.stVal=20% -> results in \"SocDC.stVal about 23%\"
+#SoC_min:									SoC ... force charging (ChargedFlag is set to \"-1\") until \"SoC_discharge\" is reached, e.g. 5% less than SoC_discharge.
+#SoC_err:									SoC ... verify wrong entries in log, - below that value (should be set in range of 1 ... 5)
+#
+#counter_discharge_to_standby_max:			max. time (in sec.) until dis/charging is possible prior to swtiching to standby
+#counter_standby_to_discharge_max:			max. time (in sec.) observing in standby until discharging is enabled
+#counter_increment:							time of one loop (while) in sec
+#loop_delay:								time (in sec.) of a requested delay (sleep routine)
+#
+#
+#system_initialization:						required system init:  \"1112\" or \"112\"
+#
+#ECS3_configuration:						ECS3 Configuration: \"PVHH\" ... PVHH meter; \"GRID\" ... Grid meter
+#
+#BusinessOptimum_BOS:						Connection with BOS:  0: BusinessOptimum standalone // 1: BusinessOptimumStarter (BOS) required
+#
+#P_in_W_chargeStandbyThreshold ... P_in_W_chargeStandbyThreshold_hyst ... 0
+#P_in_W_dischargeStandbyThreshold ... P_in_W_dischargeStandbyThreshold_delay ... P_in_W_dischargeStandbyThreshold_hyst ... 0
+#SoC_max ... SoC_charge ... SoC_discharge ... SoC_min ... SoC_err
+#
+#P_in_W_chargeStandbyThreshold;#P_in_W_chargeStandbyThreshold_hyst;#P_in_W_dischargeStandbyThreshold;#P_in_W_dischargeStandbyThreshold_delay;#P_in_W_dischargeStandbyThreshold_hyst;#SoC_max;#SoC_charge;#SoC_discharge;#SoC_min;#SoC_err;#counter_discharge_to_standby_max;#counter_charge_to_standby_max;#counter_standby_to_discharge_max;#counter_increment;#system_initialization;#ECS3_Configuration
+#October-March: -1500;-1000;2500;1500;1000;90;80;23;18;0;120;60;4;0;1112;PVHH;0;
+#April-September: -4000;-1500;1500;750;500;90;80;23;18;0;120;60;4;0;1112;PVHH;0;
+#Config created by FHEM";
+
+#update_Fehlerspeicher();
+
+my $timestamp2 = substr(TimeNow(),0,10); #"2020-04-11" 01:00:15  für Logfile Teil1
+my $timestamp3 = substr(TimeNow(),11,8); #2020-04-11 "01:00:15"  für Logfile Teil2
+my $timestamp4 = $timestamp2."_".$timestamp3; #für Logfile Teil1_Teil2
+
+my $filename = "/opt/fhem/log/BusinessOptimum.config";
+
+my $P_in_W_chargeStandbyThreshold = ReadingsNum("P_in_W_chargeStandbyThreshold","state",0);
+my $P_in_W_chargeStandbyThreshold_hyst = ReadingsNum("P_in_W_chargeStandbyThreshold_hyst","state",0);
+my $P_in_W_dischargeStandbyThreshold = ReadingsNum("P_in_W_dischargeStandbyThreshold","state",0);
+my $P_in_W_dischargeStandbyThreshold_delay = ReadingsNum("P_in_W_dischargeStandbyThreshold_delay","state",0);
+my $P_in_W_dischargeStandbyThreshold_hyst = ReadingsNum("P_in_W_dischargeStandbyThreshold_hyst","state",0);
+my $SoC_max = ReadingsNum("SoC_max","state",0);
+my $SoC_charge = ReadingsNum("SoC_charge","state",0);
+my $SoC_discharge =ReadingsNum("SoC_discharge","state",0);
+my $SoC_min = ReadingsNum("SoC_min","state",0);
+my $SoC_err = ReadingsNum("SoC_err","state",0);
+my $counter_discharge_to_standby_max = ReadingsNum("counter_discharge_to_standby_max","state",0);
+my $counter_standby_to_discharge_max = ReadingsNum("counter_standby_to_discharge_max","state",0);
+my $counter_increment = ReadingsVal("counter_increment","counter_increment","999");
+my $loop_delay = ReadingsVal("counter_increment","loop_delay","999");
+my $system_initialization = ReadingsVal("system_initialization","Initstatus","999");
+#my $system_initialization = ReadingsVal("SwDER_LLN0", "Init", "999");
+my $ECS3_configuration = ReadingsVal("ECS3_configuration","state","999");
+my $BusinessOptimum_BOS = ReadingsVal("BusinessOptimum_BOS","Initstatus","999");
+my @dataArray = ($P_in_W_chargeStandbyThreshold,$P_in_W_chargeStandbyThreshold_hyst,$P_in_W_dischargeStandbyThreshold,$P_in_W_dischargeStandbyThreshold_delay,$P_in_W_dischargeStandbyThreshold_hyst,$SoC_max,$SoC_charge,$SoC_discharge,$SoC_min,$SoC_err,$counter_discharge_to_standby_max,$counter_standby_to_discharge_max,$counter_increment,$loop_delay,$system_initialization,$ECS3_configuration,$BusinessOptimum_BOS);
+
+
+overwriteLog($filename, "$string $timestamp4
+$P_in_W_chargeStandbyThreshold;$P_in_W_chargeStandbyThreshold_hyst;$P_in_W_dischargeStandbyThreshold;$P_in_W_dischargeStandbyThreshold_delay;$P_in_W_dischargeStandbyThreshold_hyst;$SoC_max;$SoC_charge;$SoC_discharge;$SoC_min;$SoC_err;$counter_discharge_to_standby_max;$counter_standby_to_discharge_max;$counter_increment;$loop_delay;$system_initialization;$ECS3_configuration;$BusinessOptimum_BOS;");
+
+
+fhem("setreading write_settings Data @dataArray"); 	
+
+
+#Log(1,"BussinessOptimum @dataArray");
+}
+
+
+
+
+
+# Config an die Caterva als BusinessOptimum.config kopieren
+sub 
+copy2caterva_BusinessOptimum_config()
+{
+system("scp /opt/fhem/log/BusinessOptimum.config admin\@caterva:bin");
+}
+
+
+
+sub 
+delete_noPVBuffering_Flag()
+{
+system("ssh admin\@caterva rm -f /home/admin/registry/noPVBuffering");
+}
+
+sub 
+create_noPVBuffering_Flag()
+{
+system("ssh admin\@caterva touch /home/admin/registry/noPVBuffering");
+}
+
+sub
+check_noPVBuffering_Flag()
+{
+my $response = `echo -f /home/admin/registry/noPVBuffering`;
+if ($response) {Log 1,"File noPVBuffering existiert"} else {Log 1,"File noPVBuffering existiert nicht"}; 
+}
+
+
+#rsh admin@caterva "/home/admin/bin/BusinessOptimumKill.sh" 
+sub 
+BusinessOptimumKill()
+{
+system("rsh admin\@caterva /home/admin/bin/BusinessOptimumKill.sh");
+}
+
+sub 
+BusinessOptimumStart()
+{
+system("rsh admin\@caterva nohup /home/admin/bin/BusinessOptimum.sh &");
+}
+
+sub 
+BusinessOptimumStarter_Start()
+{
+system("(rsh admin\@caterva nohup /home/admin/bin/BusinessOptimumStarter.sh start & )&");
+}
+
+sub 
+BusinessOptimumStarter_Stop()
+{
+system("rsh admin\@caterva /home/admin/bin/BusinessOptimumStarter.sh stop");
+}
+
+
 sub
 addToLog($$)
 {
@@ -692,6 +918,15 @@ addToLog($$)
 	close(MYFILE);
 }
 
+sub
+overwriteLog($$)
+{
+	my ($filename, $data) = @_;
+	my $timestamp1 = substr(TimeNow(),0,7);
+	open(MYFILE,">$filename");
+	print MYFILE "$data";
+	close(MYFILE);
+}
 
 sub prg_Tage_MTD(){
  	my ($sec,$min,$hour,$mday,$month,$year,$wday,$yday,$isdst) = localtime;

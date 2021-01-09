@@ -1,4 +1,4 @@
-# Created by FHEM/98_SVG.pm, 2020-10-03 16:10:37
+# Created by FHEM/98_SVG.pm, 2021-01-06 15:39:14
 set terminal png transparent size <SIZE> crop
 set output '<OUT>.png'
 set xdata time
@@ -15,4 +15,4 @@ set y2range [0:8]
 
 #ESS_Logfile 95:3\x3a.*::
 
-plot "<IN>" using 1:2 axes x1y2 title 'Load' ls l4fill_gyr lw 2 with fsteps
+plot "<IN>" using 1:2 axes x1y2 title 'Load' ls l4fill_gyr lw 1 with fsteps
