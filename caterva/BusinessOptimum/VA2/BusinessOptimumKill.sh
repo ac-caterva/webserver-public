@@ -24,6 +24,7 @@ sudo rm -f /tmp/BusinessOptimum_config.tmp
 sudo rm -f /tmp/BusinessOptimum_config_tail.tmp
 sudo rm -f /tmp/BusinessOptimum.config
 sudo rm -f /var/log/ModuleBalancing		
-sudo rm -f /var/log/CellBalancing	
+sudo rm -f /var/log/CellBalancing
+sudo rm -f /var/log/ChargedFlag
 
 
