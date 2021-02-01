@@ -64,6 +64,6 @@ Alle Scripte muessen ausfuehrabr sein.
 
 ## Verteilung starten
 
-Die Verteilung wird gestartet mit dem Aufruf `/home/pi/Git-Clones/webserver/Copy2PiVerteilung.sh`
+Die Verteilung wird gestartet mit dem Aufruf `/home/pi/Git-Clones/webserver-public/Copy2PiVerteilung.sh`
 Protokoll steht in der Datei `/var/caterva/logs/Copy2PiVerteilung.log`
 

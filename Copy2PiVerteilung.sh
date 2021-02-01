@@ -16,6 +16,16 @@ MY_PID=$$
 
 exec 2>> $LOG_FILE
 
+function DeleteRepoWebserver ()
+{
+	rm -rf /home/pi/Git-Clones/webserver
+}
+
+function CreateSymLinkRepoWebserver2WebserverPublic ()
+{
+	ln -s webserver-public /home/pi/Git-Clones/webserver
+}
+
 function SplitConfigLine ()
 {
 	# Array with all values form the LINE
@@ -211,6 +221,10 @@ fi
 echo $MY_PID > $LOCK_FILE
 
 LogStartUpdateMessage
+
+DeleteRepoWebserver
+
+CreateSymLinkRepoWebserver2WebserverPublic
 
 declare -a CONFIG_FILE_FIELDS
 CONFIG_FILE_FIELDS=( "SOURCE" "TARGET" "CREA" "PRE" "UPD" "POST" "COPY_WITH_RSYNC" )
