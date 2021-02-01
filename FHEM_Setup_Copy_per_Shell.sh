@@ -4,10 +4,13 @@
 
 if [ -f /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run ]
 then
-    echo " Das Scripte wurde bereits ausgefuehrt"
+    echo " Das Scripte $0 wurde bereits einmal ausgefuehrt."
     echo ""
     exit
 fi
+
+
+echo " Das Scripte $0 wird jetzt einmalig ausgefuehrt."
 
 # User fhem in die Gruppe pi aufnehmen
 sudo usermod -a -G pi fhem
@@ -29,14 +32,11 @@ sudo chown fhem:dialout /opt/fhem/.ssh/config /opt/fhem/.ssh/id_rsa /opt/fhem/.s
 # Berechtigungen auf den Verzeichnissen
 sudo chmod 775 /var/caterva/data
 sudo chmod 775 /var/caterva/logs
-sudo chmod 664 /var/caterva/data/invoiceLog.diff.csv
-sudo chmod 664 /var/caterva/logs/invoiceLog.csv
-## sudo chmod 775 /var/caterva/lock
 
 touch /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run
 
 echo ""
-echo "Alles erledigt!"
+echo "$0: Alles erledigt!"
 echo ""
 
 exit

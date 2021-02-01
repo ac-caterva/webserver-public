@@ -26,6 +26,11 @@ function CreateSymLinkRepoWebserver2WebserverPublic ()
 	ln -s webserver-public /home/pi/Git-Clones/webserver
 }
 
+function SetupSshToCatervaforFhem ()
+{
+	$REPO_BASEDIR/FHEM_Setup_Copy_per_Shell.sh >> $LOG_FILE
+}
+
 function SplitConfigLine ()
 {
 	# Array with all values form the LINE
@@ -225,6 +230,8 @@ LogStartUpdateMessage
 DeleteRepoWebserver
 
 CreateSymLinkRepoWebserver2WebserverPublic
+
+SetupSshToCatervaforFhem
 
 declare -a CONFIG_FILE_FIELDS
 CONFIG_FILE_FIELDS=( "SOURCE" "TARGET" "CREA" "PRE" "UPD" "POST" "COPY_WITH_RSYNC" )
