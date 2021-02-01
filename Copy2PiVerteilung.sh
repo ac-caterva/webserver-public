@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REPO_BASEDIR=/home/pi/Git-Clones/webserver
+REPO_BASEDIR=/home/pi/Git-Clones/webserver-public
 DISTRIB_DIR=$REPO_BASEDIR/Verteilung
 CONFIG_FILE=$DISTRIB_DIR/Config/Copy2Pi.config
 CREA_DIR=$DISTRIB_DIR/CreateTargetDir
