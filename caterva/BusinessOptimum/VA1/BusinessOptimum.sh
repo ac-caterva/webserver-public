@@ -2,7 +2,7 @@
 ### BEGIN INFO
 # Provides: Business Optimization
 #
-# chargeStandbyThreshold_hyst:      Charging routine will stop, when "chargeStandbyThreshold_hyst" has been reached
+# chargeStandbyThreshold_hyst:		Charging routine will stop, when "chargeStandbyThreshold_hyst" has been reached
 # dischargeStandbyThreshold:		Discharging immediately, when "dischargeStandbyThreshold" exceeded
 # dischargeStandbyThreshold_delay:	Discharging only, when "dischargeStandbyThreshold_delay" has been exceeded > "counter_standby_to_discharge_max"
 # dischargeStandbyThreshold_hyst:	Discharging routine will stop, when "dischargeStandbyThreshold_hyst" has been reached
@@ -14,19 +14,16 @@
 # /home/admin/registry/dischargeStandbyThreshold 		- not existing or standard value: 300.00
 #
 # Status  ---  cat /home/admin/registry/noPVBuffering   - not existing: PVBuffering / existing: noPVBuffering
-#              cat /var/log/ChargedFlag					- '0' charge/discharge possible
+#              cat /tmp/ChargedFlag						- '0' charge/discharge possible
 #														- '1' discharge only
-#														- "-1" force charching
-#
-#
-#
+#														- "-1" force charging
 
-# Siegfried Quinger - VA10_2021-01-03_18.00
+# Siegfried Quinger - VA10_2021-01-24_18.00
 ### END INFO
 
 
 #-------------------------------------------------------------------------------------------------------------------
-version="VA10_2021-01-03_18.00"
+version="VA10_2021-01-24_18.00"
 #-------------------------------------------------------------------------------------------------------------------
 
 
@@ -76,33 +73,84 @@ function function_Print_nohup ()
 
 
 #-------------------------------------------------------------------------------------------------------------------
+# function_cleanup
+# Clean up enivironment on exit
+#-------------------------------------------------------------------------------------------------------------------
+function function_Cleanup ()
+ {
+	# removes file noPVBuffering, -> charging/discharging possible for normal operation w/o BusinessOptimum
+	rm -f /home/admin/registry/noPVBuffering
+
+	# Remove status files of different functions of BusinessOptimum
+	rm -f /tmp/ChargedFlag
+	rm -f /tmp/BusinessOptimumStop
+	rm -f /tmp/BusinessOptimumActive
+	rm -f /tmp/ModuleBalancingActive
+	rm -f /tmp/CellBalancing
+	rm -f /tmp/CellBalancingActive
+	rm -f /tmp/ForcedChargingActive
+	rm -f /tmp/BusinessOptimumGrid
+	# Remove request files of ModuleBalancing of BusinessOptimum
+	rm -f /var/log/ModuleBalancing
+
+	# set back to normal operations, - needed when interrupted during forced charging, module balancing or grid operation
+	swarmBcSend "CPOL1.Wchrg.setMag.f=0" > /dev/null
+	swarmBcSend "CPOL1.OffsetDuration.setVal=1422692866" > /dev/null
+	swarmBcSend "CPOL1.OffsetStart.setVal=0" > /dev/null
+ }
+#-------------------------------------------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------------------------------------------
 # function_exit_and_start
 # Record System Status in log-File prior to restarting, force restart of BusinessOptimum
 #-------------------------------------------------------------------------------------------------------------------
 function function_exit_and_start ()
 {
-echo "" >> ${_LOGFILE_}
-echo $(date +"%Y-%m-%d %T") '||' System nicht mehr betriebsbereit >> ${_LOGFILE_}
-echo ------------------------------------------------------------------------------------------------ >> ${_LOGFILE_}
-System_Initialization=$(swarmBcSend "LLN0.Init.stVal")
-echo Systemzustandsabfrage 'LLN0.Init.stVal'... '"'$System_Initialization'"' >> ${_LOGFILE_}
-System_Running=$(swarmBcSend "LLN0.Mod.stVal")
-echo Systembetriebsabfrage 'LLN0.Mod.stVal'... '"'$System_Running'"' >> ${_LOGFILE_}
-
-# Display / Print nohup.out
-function_Print_nohup
-
-echo $(date +"%Y-%m-%d %T") '||' System nicht mehr betriebsbereit - Abbruch >> ${_LOGFILE_}
-echo ------------------------------------------------------------------------------------------------ >> ${_LOGFILE_}
-
-# Restart only when BusinessOptimumStarter is not configured: Status: "0"
-if [[ $BusinessOptimum_BOS == "0" ]]; then
-	echo $(date +"%Y-%m-%d %T") '||' BusinessOptimum wird neu gestartet >> ${_LOGFILE_}
 	echo "" >> ${_LOGFILE_}
+	echo $(date +"%Y-%m-%d %T") '||' System nicht mehr betriebsbereit >> ${_LOGFILE_}
+	echo ------------------------------------------------------------------------------------------------ >> ${_LOGFILE_}
+	System_Initialization=$(swarmBcSend "LLN0.Init.stVal")
+	echo Systemzustandsabfrage 'LLN0.Init.stVal'... '"'$System_Initialization'"' >> ${_LOGFILE_}
+	System_Running=$(swarmBcSend "LLN0.Mod.stVal")
+	echo Systembetriebsabfrage 'LLN0.Mod.stVal'... '"'$System_Running'"' >> ${_LOGFILE_}
 
-	# Re-Start BusinessOptimum
-	nohup /home/admin/bin/BusinessOptimum.sh &
-fi
+	# Display / Print nohup.out
+	function_Print_nohup
+
+	echo $(date +"%Y-%m-%d %T") '||' System nicht mehr betriebsbereit - Abbruch >> ${_LOGFILE_}
+	echo ------------------------------------------------------------------------------------------------ >> ${_LOGFILE_}
+
+
+	# reset operation status: delete BusinessOptimumActive
+	rm -f /tmp/BusinessOptimumActive
+
+	# Restart only when BusinessOptimumStarter is not configured: Status: "0"
+	if [[ $BusinessOptimum_BOS == "0" ]]; then
+		echo $(date +"%Y-%m-%d %T") '||' BusinessOptimum wird neu gestartet >> ${_LOGFILE_}
+		echo "" >> ${_LOGFILE_}
+
+		# Re-Start BusinessOptimum
+		nohup /home/admin/bin/BusinessOptimum.sh &
+	fi
+}
+#-------------------------------------------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------------------------------------------
+# function_exit
+# Exit BusinessOptimum when requested
+function function_exit ()
+{
+	if ( [ -f /tmp/BusinessOptimumStop ] ) ; then
+		echo "" >> ${_LOGFILE_}
+		echo $(date +"%Y-%m-%d %T") '||' Anforderung erhalten BusinessOptimum zu beenden.  >> ${_LOGFILE_}
+		# Clean up environment on exit
+		function_Cleanup
+		echo $(date +"%Y-%m-%d %T") '||' BusinessOptimum wurde kontrolliert beendet.  >> ${_LOGFILE_}
+				echo "" >> ${_LOGFILE_}
+		exit
+	fi
 }
 #-------------------------------------------------------------------------------------------------------------------
 
@@ -116,13 +164,22 @@ function function_Kill_processes ()
 	echo "" >> ${_LOGFILE_}
 	top -b -n 1 | grep load >> ${_LOGFILE_}
 	top -b -n 1 | grep agetty >> ${_LOGFILE_}
+	top -b -n 1 | grep haveged >> ${_LOGFILE_}
 	top -b -n 1 | grep monitor.sh >> ${_LOGFILE_}
 	top -b -n 1 | grep swarmcomm.sh >> ${_LOGFILE_}
 	p1=$(pidof -x agetty)
 	sudo pkill -SIGTERM agetty
 	p2=$(pidof -x agetty)
 	#echo $(date +"%Y-%m-%d %T") '||' agetty aktuell: $p1 '(PIDs)' '||' killed '||' agetty neu: $p2 '(PIDs)' >> ${_LOGFILE_}
-	sudo pkill -SIGTERM swarmcomm.sh
+
+	if [[ $SystemSerial == "SN000168" ]]; then
+		sudo pkill -SIGTERM "swarmcomm.sh"
+		sudo pkill -SIGTERM haveged
+		sudo pkill -SIGTERM monitor.sh
+		top -b -n 1 | grep haveged >> ${_LOGFILE_}
+		top -b -n 1 | grep monitor.sh >> ${_LOGFILE_}
+		top -b -n 1 | grep swarmcomm.sh >> ${_LOGFILE_}
+	fi
  }
 #-------------------------------------------------------------------------------------------------------------------
 
@@ -134,13 +191,14 @@ function function_Kill_processes ()
 function function_Timer_Minute ()
 {
 	Timer_M_increment_int=0
+	printf -v date_S_int %.0f $(date +%S) # Second
 	if [ $Status_Timer_M_ini_int -eq 1 ]; then
 		# Timer_M --- Monitor time to initate certain functions (every minute)
-		if ( [ $(date +%S) -ge 00 ] && [ $(date +%S) -le 15 ] && [ $Status_Timer_M_int -eq 0 ] && [ $Timer_M_increment_int -eq 0 ] ); then
+		if ( [ $date_S_int -ge 0 ] && [ $date_S_int -le 15 ] && [ $Status_Timer_M_int -eq 0 ] && [ $Timer_M_increment_int -eq 0 ] ); then
 			Timer_M_increment_int=$(awk '{print $1}' <<<"${Timer_M_increment_int}")
 			Status_Timer_M_int=1
 		fi
-		if ( [ $(date +%S) -ge 16 ] && [ $Status_Timer_M_int -eq 1 ] ); then
+		if ( [ $date_S_int -ge 16 ] && [ $Status_Timer_M_int -eq 1 ] ); then
 			Timer_M_increment_int=0
 			Status_Timer_M_int=0
 			Status_Timer_M_activated_int=0
@@ -156,12 +214,13 @@ function function_Timer_Minute ()
 #-------------------------------------------------------------------------------------------------------------------
 function function_Timer_Hour ()
 {
+	printf -v date_M_int %.0f $(date +%M) # Minute
 	if [ $Status_Timer_H_ini_int -eq 1 ]; then
 		# Timer_H --- Monitor time to initate certain functions (every hour)
-		if ( [ $(date +%M) -eq 00 ] && [ $Status_Timer_H_int -eq 0 ] ); then
+		if ( [ $date_M_int -eq 0 ] && [ $Status_Timer_H_int -eq 0 ] ); then
 			Status_Timer_H_int=1
 		fi
-		if ( [ $(date +%M) -eq 01 ] && [ $Status_Timer_H_int -eq 1 ] ); then
+		if ( [ $date_M_int -eq 1 ] && [ $Status_Timer_H_int -eq 1 ] ); then
 			Status_Timer_H_int=0
 			Status_Timer_H_activated_int=0
 		fi
@@ -194,6 +253,13 @@ function function_Read__Cell_Voltage ()
 	# Convert floating/text to integer
 	printf -v U_cell_minV_int %.0f $U_cell_minV
 	printf -v U_cell_maxV_int %.0f $U_cell_maxV
+
+	# Safety: If BMU does not deliver a correct value (>0) repeat that step
+	while [ $U_cell_minV_int -le 0 ]; do
+		U_cell_minV=$(swarmBcSend "MBMS1.MinV.mag.f")
+		printf -v U_cell_minV_int %.0f $U_cell_minV
+	done
+
 	U_cell_diff_V_int=$(awk '{print $1-$2}' <<<"${U_cell_maxV_int} ${U_cell_minV_int}")
 }
 #-------------------------------------------------------------------------------------------------------------------
@@ -271,6 +337,9 @@ function function_Read__BMU_Current_SoC_Capa ()
 	printf -v capa_module_100_int %.0f $capa_module_100
 	capa_module_100_int_low_int=$(awk '{print ($1-1)}' <<<"${capa_module_100_int}")
 
+	# Sum of all Soc_modules
+	SoC_total_int=$(awk '{print ($1+$2+$3+$4+$5+$6+$7+$8+$9+$10)}' <<<"${SoC_module_1_int} ${SoC_module_2_int} ${SoC_module_3_int} ${SoC_module_4_int} ${SoC_module_5_int} ${SoC_module_6_int} ${SoC_module_7_int} ${SoC_module_8_int} ${SoC_module_9_int} ${SoC_module_10_int}")
+
 	# Determine remaining capacity for charging sequences
 	time_remaining_int=$(awk '{print ($1-$2)}' <<<"${time_limit_int} ${time_current_sec_epoch_int}")
 	capacity_remaining_int=$(awk '{print ($1-$2)}' <<<"${full_capa_module_BMU_minus_int} ${rem_capa_module_BMU_int}")
@@ -288,18 +357,18 @@ function function_Read__Logs_Time_PVHH_INV_SoC ()
 {
 	# Save last line of invoiceLog --- Read data from invoiceLog: PV, HH, SoC
 	# Note: Only 1 reading is difficult, as value may vary a bit, therefore average of 3 readings
-	# 1st reading of invoiceLog 
+	# 1st reading of invoiceLog
 	tail -3 /var/log/invoiceLog.csv | grep -v "^#" | grep "20" | tail -1 > /var/log/invoiceLog_tail_1.csv
 	time=$(awk -F ";" '{print $2}'  /var/log/invoiceLog_tail_1.csv)
 	PV_1=$(awk -F ";" '{print $14}' /var/log/invoiceLog_tail_1.csv)
 	HH_1=$(awk -F ";" '{print $15}' /var/log/invoiceLog_tail_1.csv)
 	sleep 0.35
-	# 2nd reading of invoiceLog 
+	# 2nd reading of invoiceLog
 	tail -3 /var/log/invoiceLog.csv | grep -v "^#" | grep "20" | tail -1 > /var/log/invoiceLog_tail_2.csv
 	PV_2=$(awk -F ";" '{print $14}'    /var/log/invoiceLog_tail_2.csv)
 	HH_2=$(awk -F ";" '{print $15}'    /var/log/invoiceLog_tail_2.csv)
 	sleep 0.35
-	# 3rd reading of invoiceLog 
+	# 3rd reading of invoiceLog
 	tail -3 /var/log/invoiceLog.csv | grep -v "^#" | grep "20" | tail -1 > /var/log/invoiceLog_tail_3.csv
 	PV_3=$(awk -F ";" '{print $14}'    /var/log/invoiceLog_tail_3.csv)
 	HH_3=$(awk -F ";" '{print $15}'    /var/log/invoiceLog_tail_3.csv)
@@ -332,6 +401,32 @@ function function_Read__Logs_Time_PVHH_INV_SoC ()
 	SoC=$(awk -F ";" '{print $6}'  /var/log/batteryLog_tail.csv)
 	# Convert floating/text to integer
 	printf -v SoC_int %.0f $SoC
+}
+#-------------------------------------------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------------------------------------------
+# function_secure__charge_discharge
+# Ensures secure charging/discharging step of 15min
+# CPOL1.OffsetStart.setVal set to current date; fixed time is used as a delay - 900sec
+# based on that "secureDate_900s_int" is calculated;
+# When "currentDate_int > secureDate_900s_int" Inverter will be adjusted to operate for additional 15 min.
+# CPOL1.OffsetStart.setVal is set to current date again (new date)
+# secure__charge_discharge_int=0;   set in sequence "rm -f /home/admin/registry/noPVBuffering", and start of balancing / forced charging
+#-------------------------------------------------------------------------------------------------------------------
+function function_secure__charge_discharge ()
+{
+	# CPOL1.OffsetStart only driven by secure__charge_discharge_int=0 (900sec = 15min - status kept at "1")
+	printf -v currentDate_int %.0f $(date +%s) # Unix Epoch Time
+	if [ $secure__charge_discharge_int -eq 0 ]; then
+		swarmBcSend "CPOL1.OffsetStart.setVal=$currentDate_int"
+		secureDate_900s_int=$(awk '{print $1+900}' <<<"${currentDate_int}")
+	fi
+	difference_secureDates=$(awk '{print $1-$2}' <<<"${secureDate_900s_int} ${currentDate_int}")
+		secure__charge_discharge_int=1
+	if [ $currentDate_int -gt $secureDate_900s_int ]; then
+		secure__charge_discharge_int=0
+	fi
 }
 #-------------------------------------------------------------------------------------------------------------------
 
@@ -373,10 +468,8 @@ function function_Check_Inverter_ON_charge_60_loops ()
 {
 	if ( [[ $CPOL1_Mod != "1" ]] && [ $loop_inverter_charge_int -lt 60 ] ); then
 	    loop_inverter_charge_int=$(awk '{print $1+1}' <<<"${loop_inverter_charge_int}")
-		#SQ# echo $(date +"%Y-%m-%d %T") '||' $loop_inverter_charge_int von 60 Loops bis zum shutdown >> ${_LOGFILE_}
 	fi
 	if ( [[ $CPOL1_Mod != "1" ]] && [ $loop_inverter_charge_int -ge 60 ] ); then
-		# echo $(date +"%Y-%m-%d %T") '||' $loop_inverter_charge_int von 60 Loops bis zum shutdown >> ${_LOGFILE_}
 		echo $(date +"%Y-%m-%d %T") '||' System - shutdown --- EINSPEICHERN nicht mehr möglich seit für min. 4 min '(60 loops)'  >> ${_LOGFILE_}
 		sudo shutdown -r now
 		echo $(date +"%Y-%m-%d %T") '||' '"shutdown -r now"' nicht möglich, deswegen wird forcierter Reboot eingeleitet  >> ${_LOGFILE_}
@@ -394,10 +487,8 @@ function function_Check_Inverter_ON_discharge_60_loops ()
 {
 	if ( [[ $CPOL1_Mod != "1" ]] && [ $loop_inverter_discharge_int -lt 60 ] ); then
 	    loop_inverter_discharge_int=$(awk '{print $1+1}' <<<"${loop_inverter_discharge_int}")
-		#SQ# echo $(date +"%Y-%m-%d %T") '||' $loop_inverter_discharge_int von 60 Loops bis zum shutdown >> ${_LOGFILE_}
 	fi
 	if ( [[ $CPOL1_Mod != "1" ]] && [ $loop_inverter_discharge_int -ge 60 ] ); then
-		# echo $(date +"%Y-%m-%d %T") '||' $loop_inverter_discharge_int von 60 Loops bis zum shutdown >> ${_LOGFILE_}
 		echo $(date +"%Y-%m-%d %T") '||' System - shutdown --- AUSSPEICHERN nicht mehr möglich seit min. 4 min '(60 loops)'  >> ${_LOGFILE_}
 		sudo shutdown -r now
 		echo $(date +"%Y-%m-%d %T") '||' '"shutdown -r now"' nicht möglich, deswegen wird forcierter Reboot eingeleitet  >> ${_LOGFILE_}
@@ -413,97 +504,140 @@ function function_Check_Inverter_ON_discharge_60_loops ()
 #-------------------------------------------------------------------------------------------------------------------
 function function_Verify_Configuration ()
 {
-	error_int=0
+	configuration_error_int=0
 	if [ $chargeStandbyThreshold_hyst_int -gt -400 ]; then
-		echo P_in_W_chargeStandbyThreshold_hyst: max: '-400' '||' aktuell: $chargeStandbyThreshold_hyst_int >> ${_LOGFILE_}
-		error_int=1
+		echo "P_in_W_chargeStandbyThreshold_hyst:    " '≤' '-400' '||' aktuell: $chargeStandbyThreshold_hyst_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		chargeStandbyThreshold_hyst_int=-1000
 	fi
 	if [ $chargeStandbyThreshold_int -ge $chargeStandbyThreshold_hyst_int ]; then
-		echo P_in_W_chargeStandbyThreshold: '<' $chargeStandbyThreshold_hyst_int '||' aktuell: $chargeStandbyThreshold_int >> ${_LOGFILE_}
-		error_int=1
+		echo "P_in_W_chargeStandbyThreshold:         " '<' $chargeStandbyThreshold_hyst_int '||' aktuell: $chargeStandbyThreshold_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		chargeStandbyThreshold_int=-1500
 	fi
 	if [ $dischargeStandbyThreshold_hyst_int -lt 300 ]; then
-		echo P_in_W_dischargeStandbyThreshold_hyst: min: 300 '||' aktuell: $dischargeStandbyThreshold_hyst_int >> ${_LOGFILE_}
-		error_int=1
+		echo "P_in_W_dischargeStandbyThreshold_hyst: " '≥' 300 '||' aktuell: $dischargeStandbyThreshold_hyst_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		dischargeStandbyThreshold_hyst_int=1000
 	fi
 	if [ $dischargeStandbyThreshold_delay_int -le $dischargeStandbyThreshold_hyst_int ]; then
-		echo P_in_W_dischargeStandbyThreshold_delay: '>' $dischargeStandbyThreshold_hyst_int '||' aktuell: $dischargeStandbyThreshold_delay_int >> ${_LOGFILE_}
-		error_int=1
+		echo "P_in_W_dischargeStandbyThreshold_delay:" '>' $dischargeStandbyThreshold_hyst_int '||' aktuell: $dischargeStandbyThreshold_delay_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		dischargeStandbyThreshold_delay_int=1500
 	fi
 	if [ $dischargeStandbyThreshold_int -le $dischargeStandbyThreshold_delay_int ]; then
-		echo P_in_W_dischargeStandbyThreshold_delay: '>' $dischargeStandbyThreshold_delay_int '||' aktuell: $dischargeStandbyThreshold_int >> ${_LOGFILE_}
-		error_int=1
+		echo "P_in_W_dischargeStandbyThreshold_delay:" '>' $dischargeStandbyThreshold_delay_int '||' aktuell: $dischargeStandbyThreshold_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		dischargeStandbyThreshold_int=2500
 	fi
 
 	if [ $SoC_max_config_int -gt 90 ]; then
-		echo SoC_max: max: 90 '||' aktuell: $SoC_max_config_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_max:                               " '≤' 90 '||' aktuell: $SoC_max_config_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_max_config_int=90
 	fi
 	if [ $SoC_charge_config_int -ge $SoC_max_config_int ]; then
-		echo SoC_charge: '<' $SoC_max_config_int '||' aktuell: $SoC_charge_config_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_charge:                            " '<' $SoC_max_config_int '||' aktuell: $SoC_charge_config_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_charge_config_int=80
 	fi
 	if [ $SoC_discharge_int -ge $SoC_charge_config_int ]; then
-		echo SoC_discharge: *<* $SoC_charge_config_int '||' aktuell: $SoC_discharge_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_discharge:                         " '<' $SoC_charge_config_int '||' aktuell: $SoC_discharge_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_discharge_int=23
 	fi
 	if [ $SoC_discharge_int -lt 20 ]; then
-		echo SoC_discharge: '≥' 20 '||' aktuell: $SoC_discharge_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_discharge:                         " '≥' 20 '||' aktuell: $SoC_discharge_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_discharge_int=23
 	fi
 	if [ $SoC_min_int -ge $SoC_discharge_int ]; then
-		echo SoC_min: '<' $SoC_discharge_int '||' aktuell: $SoC_min_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_min:                               " '<' $SoC_discharge_int '||' aktuell: $SoC_min_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_min_int=18
 	fi
 	if [ $SoC_min_int -lt 10 ]; then
-		echo SoC_min: '≥' 10 '||' aktuell: $SoC_min_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_min:                               " '≥' 10 '||' aktuell: $SoC_min_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_min_int=18
 	fi
 	if [ $SoC_err_int -ne 0 ]; then
-		echo SoC_err: gleich: 0 '||' aktuell: $SoC_err_int >> ${_LOGFILE_}
-		error_int=1
+		echo "SoC_err:                               " '==' 0 '||' aktuell: $SoC_err_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		SoC_err_int=0
 	fi
 
 	if ( [ $counter_increment_int -lt 3 ] || [ $counter_increment_int -gt 6 ] ); then
-		echo counter_increment_int: 3 ... 6 '||' aktuell: $counter_increment_int >> ${_LOGFILE_}
-		error_int=1
+		echo "counter_increment_int:                 " 3 ... 6 '||' aktuell: $counter_increment_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		counter_increment_int=4
 	fi
 	if ( [ $loop_delay_int -lt 0 ] || [ $loop_delay_int -gt 30 ] ); then
-		echo loop_delay_int: 0 ... 30 '||' aktuell: $loop_delay_int >> ${_LOGFILE_}
-		error_int=1
+		echo "loop_delay_int:                        " 0 ... 30 '||' aktuell: $loop_delay_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		loop_delay_int=0
 	fi
 
-	if [ $counter_discharge_to_standby_max -lt $counter_increment_total_int ]; then
-		echo counter_discharge_to_standby_max: '≥' $counter_increment_total_int  '||' aktuell: $counter_discharge_to_standby_max >> ${_LOGFILE_}
-		error_int=1
+	if [ $counter_discharge_to_standby_max_int -lt $counter_increment_total_int ]; then
+		echo "counter_discharge_to_standby_max:      " '≥' $counter_increment_total_int  '||' aktuell: $counter_discharge_to_standby_max_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		counter_discharge_to_standby_max_int=60
 	fi
 
 	if [ $counter_standby_to_discharge_max_int -lt $counter_increment_total_int ]; then
-		echo counter_standby_to_discharge_max_int: '≥' $counter_increment_total_int  '||' aktuell: $counter_standby_to_discharge_max_int >> ${_LOGFILE_}
-		error_int=1
+		echo "counter_standby_to_discharge_max_int:  " '≥' $counter_increment_total_int  '||' aktuell: $counter_standby_to_discharge_max_int >> ${_LOGFILE_}
+		configuration_error_int=1
+		# set to standard configuration
+		counter_standby_to_discharge_max_int=60
 	fi
 
 	if [[ $system_initialization_req != "1112" ]]; then
 		if [[ $system_initialization_req != "112" ]]; then
-			echo System_Initialization: 1112 oder 112 '||' aktuell: $system_initialization_req >> ${_LOGFILE_}
-			error_int=1
+			echo "System_Initialization:                 " 1112 oder 112 '||' aktuell: $system_initialization_req >> ${_LOGFILE_}
+			configuration_error_int=1
+			# set to standard configuration
+			system_initialization_req="1112"
 		fi
 	fi
-
 	if [[ $ECS3_configuration != "PVHH" ]]; then
 		echo ECS3 Configuration: PVHH '||' aktuell: $ECS3_configuration >> ${_LOGFILE_}
-			error_int=1
+		configuration_error_int=1
+		# set to standard configuration
+		ECS3_configuration="PVHH"
 	fi
 	if [[ $BusinessOptimum_BOS != "0" ]]; then
 		if [[ $BusinessOptimum_BOS != "1" ]]; then
-			echo BusinessOptimum_BOS: 0 oder 1 '||' aktuell: $BusinessOptimum_BOS >> ${_LOGFILE_}
-			error_int=1
+			echo "BusinessOptimum_BOS:                   " 0 oder 1 '||' aktuell: $BusinessOptimum_BOS >> ${_LOGFILE_}
+			configuration_error_int=1
+			# set to standard configuration
+			BusinessOptimum_BOS="0"
 		fi
 	fi
 
-	if [ $error_int -eq 1 ]; then
-		echo Konfiguration muss verändert werden - Programm wird abgebrochen >> ${_LOGFILE_}
-		exit
+	if [ $configuration_error_int -eq 1 ]; then
+		echo "" >> ${_LOGFILE_}
+		echo Konfiguration war nicht ok, deswegen wird nun für einige Parameter eine Standardkonfiguration geladen >> ${_LOGFILE_}
+
+		# Set the timer/counter based on execution time of loop and requested delay (loop_delay)
+		counter_increment_total_int=$(awk '{print $1+$2}' <<<"${counter_increment_int} ${loop_delay_int}")
+
+		# function_Print_Configuration
+		function_Print_Configuration
 	fi
 }
 #-------------------------------------------------------------------------------------------------------------------
@@ -522,11 +656,11 @@ function function_Print_Configuration ()
 	echo "" >> ${_LOGFILE_}
 	echo Configuration of $SystemSerial: >> ${_LOGFILE_}
 	echo ------------------------------- >> ${_LOGFILE_}
-	echo "P_in_W_chargeStandbyThreshold:         " $chargeStandbyThreshold W >> ${_LOGFILE_}
-	echo "P_in_W_chargeStandbyThreshold_hyst:    " $chargeStandbyThreshold_hyst W >> ${_LOGFILE_}
-	echo "P_in_W_dischargeStandbyThreshold:       " $dischargeStandbyThreshold W >> ${_LOGFILE_}
-	echo "P_in_W_dischargeStandbyThreshold_delay: " $dischargeStandbyThreshold_delay s >> ${_LOGFILE_}
-	echo "P_in_W_dischargeStandbyThreshold_hyst:  " $dischargeStandbyThreshold_hyst s >> ${_LOGFILE_}
+	echo "P_in_W_chargeStandbyThreshold:         " $chargeStandbyThreshold_int W >> ${_LOGFILE_}
+	echo "P_in_W_chargeStandbyThreshold_hyst:    " $chargeStandbyThreshold_hyst_int W >> ${_LOGFILE_}
+	echo "P_in_W_dischargeStandbyThreshold:       " $dischargeStandbyThreshold_int W >> ${_LOGFILE_}
+	echo "P_in_W_dischargeStandbyThreshold_delay: " $dischargeStandbyThreshold_delay_int s >> ${_LOGFILE_}
+	echo "P_in_W_dischargeStandbyThreshold_hyst:  " $dischargeStandbyThreshold_hyst_int s >> ${_LOGFILE_}
 	echo "SoC_max:                                " $SoC_max_config_int % >> ${_LOGFILE_}
 	echo "SoC_charge:                             " $SoC_charge_config_int % >> ${_LOGFILE_}
 	echo "SoC_discharge:                          " $SoC_discharge_int % >> ${_LOGFILE_}
@@ -539,7 +673,7 @@ function function_Print_Configuration ()
 	echo "counter_increment_total:                " $counter_increment_total_int s '('complete loop time, rescan every $counter_increment_total_int s')' >> ${_LOGFILE_}
 	echo "system_initialization:                  " $system_initialization_req >> ${_LOGFILE_}
 	echo "ECS3_configuration:                     " $ECS3_configuration >> ${_LOGFILE_}
-	echo "BusinessOptimum:                        " $BusinessOptimum_BOS '(' 0: stand-alone // 1: BusinessOptimumStarter necessary ')' >> ${_LOGFILE_}
+	echo "BusinessOptimum:                        " $BusinessOptimum_BOS '('0: stand-alone // 1: BusinessOptimumStarter necessary')' >> ${_LOGFILE_}
 	echo "" >> ${_LOGFILE_}
 }
 #-------------------------------------------------------------------------------------------------------------------
@@ -611,15 +745,9 @@ function function_Compare_Configuration ()
 		function_Print_Configuration
 		# Verify Configuration File and advice on changes
 		function_Verify_Configuration
-		# Copy BusinessOptimum.config to Pi
-		tail -40 /tmp/BusinessOptimum.config | grep -v "FHEM" > /tmp/BusinessOptimum_FHEM.config
-		sshpass -p pi scp -o StrictHostKeyChecking=no /tmp/BusinessOptimum_FHEM.config fhem@192.168.0.50:/opt/fhem/log/BusinessOptimum.config
 	fi
 }
 #-------------------------------------------------------------------------------------------------------------------
-
-
-
 
 
 
@@ -632,18 +760,29 @@ echo ===========================================================================
 function_Print_nohup
 
 SystemSerial=$(cat /home/admin/registry/out/serial)
-MatchSystemSerial=0
-# echo $SystemSerial >> ${_LOGFILE_}
 
 #===================================================================================================================
 #===================================================================================================================
 #===================================================================================================================
 #===================================================================================================================
 
-# Start loadTools to ensure that exported variabels are supported
+
+trap 'function_Cleanup ; exit' 1 2 15
+
+
+# Start loadTools to ensure that exported variables are supported
 source /home/admin/bin/loadTools
 
 # Remove temporarily established file of BusinessOptimum
+rm -f /tmp/ChargedFlag
+rm -f /tmp/BusinessOptimumStop
+rm -f /tmp/BusinessOptimumActive
+rm -f /tmp/ModuleBalancingActive
+rm -f /tmp/CellBalancing
+rm -f /tmp/CellBalancingActive
+rm -f /tmp/ForcedChargingActive
+rm -f /tmp/BusinessOptimumGrid
+
 rm -f /tmp/BusinessOptimum.tmp
 rm -f /tmp/balanceBatteryModules.tmp
 rm -f /tmp/swarm-battery-cmd.tmp
@@ -657,6 +796,14 @@ rm -f /home/admin/registry/chargeStandbyThreshold
 rm -f /home/admin/registry/dischargeStandbyThreshold
 
 
+
+# Reduce CPU load: eliminate processes not needed
+# 40-updates (requires a reboot, however not enforced, as this will anyhow once take place....
+    if [ -f /etc/update-motd.d/40-updates ]; then
+	    	sudo mv /etc/update-motd.d/40-updates /etc/update-motd.d/40-updates_old
+	fi
+
+
 # Read configuration data of BusinessOptimum.config
 function_Read_Configuration
 
@@ -664,10 +811,11 @@ function_Read_Configuration
 # Initialize Status
 counter_discharge_to_standby_int=0	# pre-set value for counter_discharge_to_standby
 counter_standby_to_discharge_int=0	# pre-set value for counter_standby_to_discharge
-counter_SoC_err_int=0				# pre-set value for counter_SoC_err:				Counts sequeneces of censecutive lines with SoC_err
+counter_SoC_err_int=0				# pre-set value for counter_SoC_err:				Counts sequeneces of consecutive lines with SoC_err
 counter_int=0						# pre-set value for counter:						System-Status Counter
 counter_forced_charging_int=0		# pre-set value for counter_forced_charging:		Counts events of performed << forced charging >> routines
-Balancing_int=0						# pre-set value for Balancing: 						'0' Balancing not active // '1' Balancing active
+CellBalancing_int=0					# pre-set value for CellBalancing:	 				'0' CellBalancing not active // '1' CellBalancing active
+CellBalancingRequest_int=0			# pre-set value for CellBalancingRequest:			'0' CellBalancing not requested // '1' CellBalancing requested
 ForcedCharging_int=0				# pre-set value for ForcedCharging: 				'0' ForcedCharging not active // '1' ForcedCharging active
 System_Running="0"					# pre-set value for System_Running:					'0' System not runing // '1' System running
 system_running_req="1"				# pre-set value for normal systems running			# when initalization "112" is used, this will be switched to "9"
@@ -685,7 +833,7 @@ U_cell_diff_V_int=0					# pre-set value for U_cell_diff_V:					difference Voltag
 start_up__count_int=500				# start-up__time									during this period system should be up and running
 loop_inverter_charge_int=0		    # pre-set value for loop_inverter_scharge			0 set when initially noPVBufferingis removed, counts for charge issues
 loop_inverter_discharge_int=0		# pre-set value for loop_inverter_discharge			0 set when initially noPVBufferingis removed, counts for discharge issues
-GRID_watchdog__charge_int=0			# pre-set value for GRID_watchdog__charge			0 (CPOL1.OffsetStart will be set to current time); 1 (during specified time CPOL1.OffsetStart will be kept)
+secure__charge_discharge_int=0		# pre-set value for secure__charge_discharge		0 (CPOL1.OffsetStart will be set to current time); 1 (during specified time CPOL1.OffsetStart will be kept)
 
 
 if [ -f /home/admin/registry/out/bmmType ]; then
@@ -705,28 +853,32 @@ if ( [ -f /home/admin/registry/out/gen2 ] && [[ $bmmType == "sony" ]] ); then
 fi
 
 
-# Initialize "/var/log/ChargedFlag" depending on current SoC
+# Initialize "/tmp/ChargedFlag" depending on current SoC
 # Save last line of batteryLog --- Read data from batteryLog: SoC
 tail -3 /var/log/batteryLog.csv | grep -v "^#" | grep "20" | tail -1 > /var/log/batteryLog_tail.csv
 SoC=$(awk -F ";" '{print $6}'  /var/log/batteryLog_tail.csv)
 # Convert floating/text to integer
 printf -v SoC_int %.0f $SoC
 # preset based on SoC
-if [ $SoC_int -lt $SoC_discharge_int ]; then
-		echo "-1" > /var/log/ChargedFlag      ## discharging disabled / charching enabled
+if [ $SoC_int -le $SoC_min_int ]; then
+		echo "-1" > /tmp/ChargedFlag      ## discharging disabled / charching enabled
 	elif  [ $SoC_int -gt $SoC_charge_config_int ] ; then
-		echo "1" > /var/log/ChargedFlag       ## discharging enabled / charching disabled
+		echo "1" > /tmp/ChargedFlag       ## discharging enabled / charching disabled
 	else
-		echo "0" > /var/log/ChargedFlag       ## discharging enabled / charching enabled
+		echo "0" > /tmp/ChargedFlag       ## discharging enabled / charching enabled
 fi
 # set Chargedflag based on existing file content
-ChargedFlag=$(cat /var/log/ChargedFlag) 
+ChargedFlag=$(cat /tmp/ChargedFlag)
 
 
 # Log configuration data in BusinessOptimum.log
 function_Print_Configuration
 
-# Read Gen2 configuration
+# Verify Configuration File and advice on changes
+function_Verify_Configuration
+
+
+# Read Genx configuration
 if [ -f /home/admin/registry/out/gen2 ]; then
 		echo "System:                                  Gen2" >> ${_LOGFILE_}
 	else
@@ -734,9 +886,6 @@ if [ -f /home/admin/registry/out/gen2 ]; then
 fi
 echo "BMMType:                                " $bmmType >> ${_LOGFILE_}
 echo "" >> ${_LOGFILE_}
-
-# Verify Configuration File and advice on changes
-function_Verify_Configuration
 
 
 # Change system_running_req when system does not maintain communication with swarm
@@ -746,8 +895,11 @@ fi
 
 # Start functions of BusinessOptimum only when System is available/active
 System_Initialization=$(swarmBcSend "LLN0.Init.stVal")
-echo Systemzustandsabfrage 'LLN0.Init.stVal'... '"'$System_Initialization'"' >> ${_LOGFILE_}
+echo "Systemzustandsabfrage        LLN0.Init.stVal... "'"'$System_Initialization'"' >> ${_LOGFILE_}
 while ( ( [[ $System_Initialization != $system_initialization_req ]] || [ -z "$System_Initialization" ] ) && ( [ $counter_int -le $start_up__count_int ] ) ); do
+		# Exit BusinessOptimum when requested
+		function_exit
+
         if ( [[ $System_Initialization != $system_initialization_req ]] || [ -z "$System_Initialization" ] ); then
 			echo $(date +"%Y-%m-%d %T") '||' System noch nicht betriebsbereit  '('$counter_int'/'$start_up__count_int')' '||' '['$system_initialization_req':'$System_Initialization']' >> ${_LOGFILE_}
 			counter_int=$(awk '{print ($1+5)}' <<<"${counter_int}")
@@ -755,7 +907,7 @@ while ( ( [[ $System_Initialization != $system_initialization_req ]] || [ -z "$S
 		fi
 		System_Initialization=$(swarmBcSend ""LLN0.Init.stVal"")
 done
-echo '->' Systemzustandsabfrage 'LLN0.Init.stVal'... '"'$System_Initialization'"' >> ${_LOGFILE_}
+echo "-> Systemzustandsabfrage     LLN0.Init.stVal... "'"'$System_Initialization'"' >> ${_LOGFILE_}
 if [ $counter_int -ge $start_up__count_int ]; then
 	echo $(date +"%Y-%m-%d %T") '||' System - shutdown >> ${_LOGFILE_}
 	sleep 10
@@ -765,8 +917,11 @@ fi
 
 counter_int=0
 System_Activated=$(swarmBcSend "LLN0.Mod.ctlVal")
-echo Systemaktivierungsabfrage 'LLN0.Mod.ctlVal'... '"'$System_Activated'"' >> ${_LOGFILE_}
+echo "Systemaktivierungsabfrage    LLN0.Mod.ctlVal... "'"'$System_Activated'"' >> ${_LOGFILE_}
 while ( [[ $System_Activated != "1" ]] && [ $counter_int -le $start_up__count_int ] ); do
+		# Exit BusinessOptimum when requested
+		function_exit
+
         if [[ $System_Activated != "1" ]]; then
 			echo $(date +"%Y-%m-%d %T") '||' System noch nicht aktiviert  '('$counter_int'/'$start_up__count_int')' '||' '[''1:'$$System_Activated']' >> ${_LOGFILE_}
 			counter_int=$(awk '{print ($1+5)}' <<<"${counter_int}")
@@ -774,7 +929,7 @@ while ( [[ $System_Activated != "1" ]] && [ $counter_int -le $start_up__count_in
 		fi
 		System_Activated=$(swarmBcSend "LLN0.Mod.ctlVal")
 done
-echo '->' Systemaktivierungsabfrage 'LLN0.Mod.ctlVal'... '"'$System_Activated'"' >> ${_LOGFILE_}
+echo "-> Systemaktivierungsabfrage LLN0.Mod.ctlVal... "'"'$System_Activated'"' >> ${_LOGFILE_}
 if [ $counter_int -ge $start_up__count_int ]; then
 	echo $(date +"%Y-%m-%d %T") '||' System - shutdown >> ${_LOGFILE_}
 	sleep 10
@@ -784,8 +939,11 @@ fi
 
 counter_int=0
 System_Running=$(swarmBcSend "LLN0.Mod.stVal")
-echo Systembetriebsabfrage 'LLN0.Mod.stVal'... '"'$System_Running'"' >> ${_LOGFILE_}
+echo "Systembetriebsabfrage        LLN0.Mod.stVal.... "'"'$System_Running'"' >> ${_LOGFILE_}
 while ( [[ $System_Running != $system_running_req ]] && [ $counter_int -le $start_up__count_int ] ); do
+		# Exit BusinessOptimum when requested
+		function_exit
+
         if [[ $System_Running != $system_running_req ]]; then
 			echo $(date +"%Y-%m-%d %T") '||' System noch nicht betriebsbereit  '('$counter_int'/'$start_up__count_int')' '||' '['$system_running_req':'$System_Running']' >> ${_LOGFILE_}
 			counter_int=$(awk '{print ($1+5)}' <<<"${counter_int}")
@@ -793,19 +951,19 @@ while ( [[ $System_Running != $system_running_req ]] && [ $counter_int -le $star
 		fi
 		System_Running=$(swarmBcSend "LLN0.Mod.stVal")
 done
-echo '->' Systembetriebsabfrage 'LLN0.Mod.stVal'... '"'$System_Running'"' >> ${_LOGFILE_}
+echo "-> Systembetriebsabfrage     LLN0.Mod.stVal.... "'"'$System_Running'"' >> ${_LOGFILE_}
 if [ $counter_int -ge $start_up__count_int ]; then
 	echo $(date +"%Y-%m-%d %T") '||' System - shutdown >> ${_LOGFILE_}
 	sleep 10
 	sudo shutdown -r now
 	sudo reboot -f
 fi
+echo "" >> ${_LOGFILE_}
 echo System betriebsbereit und aktiviert >> ${_LOGFILE_}
 
 
 # CPOL: set back to normal operations
 function_CPOL_Reset
-
 
 
 # Display / Print Battery Status
@@ -820,10 +978,6 @@ fi
 # Copy BusinessOptimum.config to temp file for comparison of changes
 cp -f ${_BO_ConfigFILE_} /tmp/BusinessOptimum.config
 
-# Copy BusinessOptimum.config to Pi
-tail -40 /tmp/BusinessOptimum.config | grep -v "FHEM" > /tmp/BusinessOptimum_FHEM.config
-sshpass -p pi scp -o StrictHostKeyChecking=no /tmp/BusinessOptimum_FHEM.config fhem@192.168.0.50:/opt/fhem/log/BusinessOptimum.config
-
 
 
 
@@ -833,18 +987,29 @@ sshpass -p pi scp -o StrictHostKeyChecking=no /tmp/BusinessOptimum_FHEM.config f
 #===================================================================================================================
 while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System_Running == $system_running_req ]] ); do
 
+	# Exit BusinessOptimum when requested
+	function_exit
+
+	# set operation status: BusinessOptimumActive
+	touch /tmp/BusinessOptimumActive
+
 	# Verify if ModuleBalancing shall be started
 	if [ -f /var/log/ModuleBalancing ]; then
 		counter_forced_charging_int=3 					# set counter to 3, whereas ModuleBalancing will be started
 	fi
 	# Verify if CellBalancing shall be started
-	if [ -f /var/log/CellBalancing ]; then
-		CellBalancing_int=1
+	if [ -f /tmp/CellBalancing ]; then
+		CellBalancingRequest_int=1
 	fi
 
 
+	printf -v date_S_int %.0f $(date +%S) # Second
+	printf -v date_M_int %.0f $(date +%M) # Minute
+	printf -v date_H_int %.0f $(date +%H) # Hour
+	printf -v date_w_int %.0f $(date +%u) # weekday
+
 	# Monitor time to initate certain functions (every Monday at 00:00) - back-up BusinessOptimum.log and start with new BusinessOptimum-old.log
-	if ( [ $(date +%u) -eq 1 ] && [ $(date +%H) -eq 0 ] && [ $(date +%M) -eq 0 ] && [ $(date +%S) -le 30 ] ); then
+	if ( [ $date_w_int -eq 1 ] && [ $date_H_int -eq 0 ] && [ $date_M_int -eq 0 ] && [ $date_S_int -le 30 ] ); then
 		rm -f /home/admin/log/BusinessOptimum-old.log
 		cp -f ${_LOGFILE_} /home/admin/log/BusinessOptimum-old.log
 		rm -f ${_LOGFILE_}
@@ -854,13 +1019,6 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 
 		# Wait until safely files are copied and removed
 		sleep 30
-	fi
-
-
-	# Correct original settings of SoC_max and SoC_charge considering the disbalance of the modules (SoC_module_diff)
-	if ( [ -f /home/admin/registry/out/gen2 ] && [[ $bmmType == "sony" ]] ); then
-		SoC_max_int=$(awk '{print $1-$2}' <<<"${SoC_max_config_int} ${SoC_module_diff_int}")
-		SoC_charge_int=$(awk '{print $1-$2}' <<<"${SoC_charge_config_int} ${SoC_module_diff_int}")
 	fi
 
 
@@ -881,7 +1039,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 	fi
 
 
-	# Monitor time to initate certain functions (every minute) 
+	# Monitor time to initate certain functions (every minute)
 	function_Timer_Minute
 
 	# Monitor changes on .config / Display "BMU_current_max / Capacity and SoC of all modules" and "check on bigger SoC changes every minute"
@@ -908,7 +1066,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 		if ( [ -f /home/admin/registry/out/gen2 ] && [[ $bmmType == "sony" ]] ); then
 			# Read BMU_current_max / Capacity and SoC of all modules (for Gen2 only)
 			function_Read__BMU_Current_SoC_Capa
-			echo '                    ||' BMU-SoC: $SoC_module_BMU '|' $SoC_module_1_int $SoC_module_2_int $SoC_module_3_int $SoC_module_4_int $SoC_module_5_int $SoC_module_6_int $SoC_module_7_int $SoC_module_8_int $SoC_module_9_int $SoC_module_10_int '||' BMU_Kapazität: $rem_capa_module_BMU_int mAh '(' $full_capa_module_BMU_int mAh ') ||' Zell-Spannung: $U_cell_minV_int mV '|' BMU-Strom: $BMU_current_max_int mA >> ${_LOGFILE_}
+			echo '                    ||' BMU-SoC: $SoC_module_BMU '|' $SoC_module_1_int $SoC_module_2_int $SoC_module_3_int $SoC_module_4_int $SoC_module_5_int $SoC_module_6_int $SoC_module_7_int $SoC_module_8_int $SoC_module_9_int $SoC_module_10_int '|' Σ: $SoC_total_int '||' BMU_Kapazität: $rem_capa_module_BMU_int mAh '(' $full_capa_module_BMU_int mAh ') ||' Zell-Spannung: $U_cell_minV_int mV '|' BMU-Strom: $BMU_current_max_int mA >> ${_LOGFILE_}
 		fi
 		# Identify SoC-Sprünge when comparing with the actual capacity
 		if [ $SoC_int -lt $capa_module_100_int_low_int ]; then
@@ -924,6 +1082,11 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 	fi
 
 
+	# Correct original settings of SoC_max and SoC_charge considering the disbalance of the modules (SoC_module_diff)
+	if ( [ -f /home/admin/registry/out/gen2 ] && [[ $bmmType == "sony" ]] ); then
+		SoC_max_int=$(awk '{print $1-$2}' <<<"${SoC_max_config_int} ${SoC_module_diff_int}")
+		SoC_charge_int=$(awk '{print $1-$2}' <<<"${SoC_charge_config_int} ${SoC_module_diff_int}")
+	fi
 
 
 
@@ -960,17 +1123,19 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 	# Set/Reset ChargedFlag: 1 '(fully charged -> no charging possible)' -> 0 '(partially charged -> charging possible)'
 	# 						-1 '(empty -> charging is forced)'
 	if [ $SoC_int -ge $SoC_max_int ]; then
-			echo "1" > /var/log/ChargedFlag      ## stop charging
-		elif ( [ $SoC_int -le $SoC_charge_int ] && [ $SoC_int -ge $SoC_discharge_int ] && [[ $ChargedFlag == "1" ]] ); then
-			echo "0" > /var/log/ChargedFlag      ## enable charging/discharing
-		elif ( [ $SoC_int -le $SoC_charge_int ] && [ $SoC_int -ge $SoC_discharge_int ] && [[ $ChargedFlag == "-1" ]] ); then
-			echo "0" > /var/log/ChargedFlag      ## enable charging/discharing
-		elif [ $SoC_int -le $SoC_min_int ] ; then
-			echo "-1" > /var/log/ChargedFlag     ## enable forced charging
+		echo "1" > /tmp/ChargedFlag      ## stop charging
 	fi
-
+	if ( [ $SoC_int -gt $SoC_min_int ] && [ $SoC_int -le $SoC_charge_int ] && [[ $ChargedFlag == "1" ]] ); then
+		echo "0" > /tmp/ChargedFlag      ## enable charging/discharing
+	fi
+	if ( [ $SoC_int -ge $SoC_discharge_int ] && [ $SoC_int -le $SoC_charge_int ] && [[ $ChargedFlag == "-1" ]] ); then
+		echo "0" > /tmp/ChargedFlag      ## enable charging/discharing
+	fi
+	if [ $SoC_int -le $SoC_min_int ] ; then
+		echo "-1" > /tmp/ChargedFlag     ## enable forced charging
+	fi
     # set Chargedflag based on existing file content (changed conditions of previous settings)
-    ChargedFlag=$(cat /var/log/ChargedFlag) 
+    ChargedFlag=$(cat /tmp/ChargedFlag)
 
 
 	#====================================================================================================================
@@ -982,11 +1147,13 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 
 	if ( ( [[ $ChargedFlag == "-1" ]] && [ $PVandHH_int -gt $chargeStandbyThreshold_hyst_int ] ) || [ $U_cell_minV_int -le $U_cell_minV_min_forced_enable_int ] ); then
 		# Display / Print Battery Status
+		echo "" >> ${_LOGFILE_}
+		echo SoC $SoC_int % '<' $SoC_discharge_int % '('Initialisierungsphase')' >> ${_LOGFILE_}
+		echo SoC $SoC_int % '≤' $SoC_min_int % bzw. Zell-Spannung zu niedrig $U_cell_minV_int mV '≤' $U_cell_minV_min_forced_enable_int mV ? >> ${_LOGFILE_}
+		echo -------------------------------------------------------------------------------------------------- >> ${_LOGFILE_}
 		if ( [ -f /home/admin/registry/out/gen2 ] && [[ $bmmType == "sony" ]] ); then
-			echo "" >> ${_LOGFILE_}
-			echo Aktueller Status Batteriemodule: SoC $SoC_int % '<' $SoC_discharge_int % '('Initialisierungsphase')' >> ${_LOGFILE_}
-			echo Aktueller Status Batteriemodule: SoC $SoC_int % '≤' $SoC_min_int % bzw. Zell-Spannung zu niedrig $U_cell_minV_int mV '≤' $U_cell_minV_min_forced_enable_int mV ? >> ${_LOGFILE_}
-			echo -------------------------------------------------------------------------------------------------- >> ${_LOGFILE_}
+			echo Aktueller Status Batteriemodule: >> ${_LOGFILE_}
+			echo -------------------------------- >> ${_LOGFILE_}
 			function_Print_Battery_Status_1338
 		fi
 
@@ -1005,18 +1172,32 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 		    echo ---------------------------------------------------------------- >> ${_LOGFILE_}
 			# set charge command
 			swarmBcSend "CPOL1.Wchrg.setMag.f=5555" > /dev/null
-			swarmBcSend "CPOL1.OffsetDuration.setVal=3600" > /dev/null			# max. 1 hour
-			swarmBcSend "CPOL1.OffsetStart.setVal=$(date +%s)" > /dev/null
+
+			# 1111sec - 18min - greater than 900sec used for function_secure__charge_discharge
+			swarmBcSend "CPOL1.OffsetDuration.setVal=1111" > /dev/null
+			secure__charge_discharge_int=0
+
 			ForcedCharging_int=1
 		fi
 
-		time_current_original_sec_epoch_int=$(date +%s)
-		time_current_sec_epoch_int=$(date +%s)
+		# set operation status: ForcedChargingActive
+		touch /tmp/ForcedChargingActive
+
+
+
+		printf -v time_current_sec_epoch_int %.0f $(date +%s) # Unix Epoch Time
 		time_offset_sec_int=600 # 10min
-		time_limit_int=$(awk '{print ($1+$2)}' <<<"${time_current_original_sec_epoch_int} ${time_offset_sec_int}")
+		time_limit_int=$(awk '{print ($1+$2)}' <<<"${time_current_sec_epoch_int} ${time_offset_sec_int}")
 
 		while ( [ $SoC_int -lt $SoC_discharge_int ] || [ $U_cell_minV_int -le $U_cell_minV_min_forced_disable_int ] || [ $time_current_sec_epoch_int -le $time_limit_int ] ); do
-		    # Monitor time to initate certain functions (every minute)
+
+			# Exit BusinessOptimum when requested
+			function_exit
+
+			# Ensures secure charging/discharging step of 15min
+			function_secure__charge_discharge
+
+			# Monitor time to initate certain functions (every minute)
 			function_Timer_Minute
 
 			# Read cell voltage min/max, BMU_current_max and SoC of all modules (SoC/capacity for Gen2 only)
@@ -1028,7 +1209,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 				if ( [ -f /home/admin/registry/out/gen2 ] && [[ $bmmType == "sony" ]] ); then
 					# Read BMU_current_max / Capacity and SoC of all modules (for Gen2 only)
 					function_Read__BMU_Current_SoC_Capa
-					echo '                    ||' BMU-SoC: $SoC_module_BMU '|' $SoC_module_1_int $SoC_module_2_int $SoC_module_3_int $SoC_module_4_int $SoC_module_5_int $SoC_module_6_int $SoC_module_7_int $SoC_module_8_int $SoC_module_9_int $SoC_module_10_int '||' BMU_Kapazität: $rem_capa_module_BMU_int mAh '(' $full_capa_module_BMU_int mAh ') ||' Zell-Spannung: $U_cell_minV_int mV '|' BMU-Strom: $BMU_current_max_int mA  >> ${_LOGFILE_}
+					echo '                    ||' BMU-SoC: $SoC_module_BMU '|' $SoC_module_1_int $SoC_module_2_int $SoC_module_3_int $SoC_module_4_int $SoC_module_5_int $SoC_module_6_int $SoC_module_7_int $SoC_module_8_int $SoC_module_9_int $SoC_module_10_int '|' Σ: $SoC_total_int '||' BMU_Kapazität: $rem_capa_module_BMU_int mAh '(' $full_capa_module_BMU_int mAh ') ||' Zell-Spannung: $U_cell_minV_int mV '|' BMU-Strom: $BMU_current_max_int mA  >> ${_LOGFILE_}
 				fi
 
 				Status_Timer_M_activated_int=1
@@ -1041,11 +1222,11 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 			fi
 
 			# Read time, PVandHH, INV, SoC (invoice and battery log)
-			function_Read__Logs_Time_PVHH_INV_SoC	
+			function_Read__Logs_Time_PVHH_INV_SoC
 
 			echo $time '||' Cell_Δ: $U_cell_diff_V_int mV '|' SoC_Δ: $SoC_module_diff_int % '|' PVundHH: $PVandHH_int W '|' Capa_% $capa_module_100_int % '|' SoC: $SoC_int % '|' ChargedFlag: $ChargedFlag '|' INV: $CPOL1_Mod '|' INV: $Inv_Request W '|' Z '|' Nachladen >> ${_LOGFILE_}
 		    sleep 1
-			time_current_sec_epoch_int=$(date +%s)
+			printf -v time_current_sec_epoch_int %.0f $(date +%s) # Unix Epoch Time
 
 			# Check status of inverter, - if not ON ("1") within 30s force shutdown
 			function_Check_Inverter_ON
@@ -1073,10 +1254,13 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 			fi
 
 			## enable normal charging/discharing
-			echo "0" > /var/log/ChargedFlag
+			echo "0" > /tmp/ChargedFlag
 
 			# Count events of forced charching
 			counter_forced_charging_int=$(awk '{print $1+1}' <<<"${counter_forced_charging_int}")
+
+			# reset operation status: delete ForcedChargingActive
+			rm -f /tmp/ForcedChargingActive
 
 		fi
 
@@ -1094,6 +1278,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 				function_Check_Inverter_ON_discharge_60_loops
 		fi
 
+
 		counter_discharge_to_standby_int=0
 		counter_standby_to_discharge_int=0
 
@@ -1105,6 +1290,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 		if [[ $Status == "PVBuffering" ]]; then
 				touch /home/admin/registry/noPVBuffering
 				echo $time '||' Cell_Δ: $U_cell_diff_V_int mV '|' SoC_Δ: $SoC_module_diff_int % '|' PVundHH: $PVandHH_int W '|' Capa_% $capa_module_100_int % '|' SoC: $SoC_int % '|' ChargedFlag: $ChargedFlag '|' INV: $CPOL1_Mod '|' INV: $Inv_Request W '|' A2 '|' STANDBY '(Sleep):' SoC≤$SoC_discharge_int% - touch noPVBuffering >> ${_LOGFILE_}
+
 			else
 				echo $time '||' Cell_Δ: $U_cell_diff_V_int mV '|' SoC_Δ: $SoC_module_diff_int % '|' PVundHH: $PVandHH_int W '|' Capa_% $capa_module_100_int % '|' SoC: $SoC_int % '|' ChargedFlag: $ChargedFlag '|' INV: $CPOL1_Mod '|' INV: $Inv_Request W '|' A2 '|' STANDBY '(Sleep):' SoC≤$SoC_discharge_int% >> ${_LOGFILE_}
 		fi
@@ -1153,7 +1339,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 	# C1 # PVandHH ≥ dischargeStandbyThreshold_hyst_int  AND SoC > SoC_discharge: AUSSPEICHERN-Hysterse (Discharge)
 	#====================================================================================================================
 	elif ( [ $PVandHH_int -ge $dischargeStandbyThreshold_hyst_int ] && [ $SoC_int -gt $SoC_discharge_int ] ); then
-		if [[ $CPOL1_Mod == "1" ]]; then
+		if ( [[ $CPOL1_Mod == "1" ]] && [[ $Status != "noPVBuffering" ]] ); then
 				# Inverter ON, - continue charging within the hysteresis
 				echo $time '||' Cell_Δ: $U_cell_diff_V_int mV '|' SoC_Δ: $SoC_module_diff_int % '|' PVundHH: $PVandHH_int W '|' Capa_% $capa_module_100_int % '|' SoC: $SoC_int % '|' ChargedFlag: $ChargedFlag '|' INV: $CPOL1_Mod '|' INV: $Inv_Request W '|' C1 '|' AUSSPEICHERN >> ${_LOGFILE_}
 			else
@@ -1251,6 +1437,7 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 					else
 						echo $time '||' Cell_Δ: $U_cell_diff_V_int mV '|' SoC_Δ: $SoC_module_diff_int % '|' PVundHH: $PVandHH_int W '|' Capa_% $capa_module_100_int % '|' SoC: $SoC_int % '|' ChargedFlag: $ChargedFlag '|' INV: $CPOL1_Mod '|' INV: $Inv_Request W '|' F  '|' EINSPEICHERN >> ${_LOGFILE_}
 				fi
+
 			else
 			# disable additional charging when reached the max value 'ChargedFlag'
 				if [[ $Status == "PVBuffering" ]]; then
@@ -1265,7 +1452,6 @@ while ( [[ $System_Initialization == $system_initialization_req ]] && [[ $System
 		counter_standby_to_discharge_int=0
 
 fi
-
 
 sleep $loop_delay_int
 

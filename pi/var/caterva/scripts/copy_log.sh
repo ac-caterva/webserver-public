@@ -1,8 +1,14 @@
 #!/bin/bash
 
-# Soll alle Minute (im Crontab pi eintragen) die letzte Zeile der Invoicelog und den 
-# load von der Caterva holen
-
+# Soll alle Minute (im Crontab pi eintragen) 
+# - die letzte Zeile der Invoicelog 
+# - die letzte Zeiler der batteryLog 
+# - den load der Caterva
+# von der Caterva holen
+#
+# V3 Uptime seperater Aufruf
+#    SoC aus batteryLog.csv
+# V2 Anlegen der ESS_Minuten Datei (Eigentuemer/Rechte)
 # v1 Ersterstellung nach duchsicht mit Anja
 
 
@@ -33,8 +39,18 @@ trap 'func_exit' 1 2 15
 echo $$ > $LOCK_FILE
 
 
-[ -f ${_ESS_MINUTENFILE_} ] && _INVOICELOG_=$(tail -n 1 ${_ESS_MINUTENFILE_})
-_INVOICELOGAKTUELL_=$(ssh admin@192.168.0.222 "tail -n 2 /var/log/invoiceLog.csv ; uptime | grep -v '^#' | tail -n 1 ") 
+if ( [ -f ${_ESS_MINUTENFILE_} ] ) ; then
+	_INVOICELOG_=$(tail -n 1 ${_ESS_MINUTENFILE_})
+else 
+	sudo touch  ${_ESS_MINUTENFILE_}
+	sudo chown fhem:dialout ${_ESS_MINUTENFILE_}
+	sudo chmod 664 ${_ESS_MINUTENFILE_}
+fi	
+
+
+_INVOICELOGAKTUELL_=$(ssh admin@192.168.0.222 "tail -n 2 /var/log/invoiceLog.csv | grep -v '^#' | tail -n 1 ") 
+_UPTIME_=$(ssh admin@192.168.0.222 "uptime") 
+_BATTERYLOGAKTUELL_=$(ssh admin@192.168.0.222 "tail -n 2 /var/log/batteryLog.csv | grep -v '^#' | tail -n 1 ") 
 
 if [ ! "$(echo ${_INVOICELOG_} | cut -d ";" -f1)" == "$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f1)" ]
 then
@@ -42,7 +58,8 @@ then
 	_MONAT_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f2 | cut -c4-5)
 	_TAG_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f2 | cut -c1-2)
 	_UHRZEIT_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f2 | cut -d " " -f2)
-	_3_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f16 | cut -d "." -f1) 				# SoC in %
+	#_3_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f16 | cut -d "." -f1) 				# SoC in %
+	_3_=$(echo ${_BATTERYLOGAKTUELL_} | cut -d ";" -f6 ) 				                            # SoC in %
 	_5_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f8 | cut -d "." -f1)                            # Grid -> Household in W
 	_7_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f9 | cut -d "." -f1)                            # Battery -> Household in W
 	_9_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f10 | cut -d "." -f1)                           # PV -> Household in W
@@ -88,7 +105,8 @@ then
 	_89_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f53 | cut -d "." -f1)                          # HHpa in Wh
 	_91_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f60 | cut -d "." -f1)                          # PFRRpos counter level in Wh
 	_93_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f61 | cut -d "." -f1)                          # PFRRneg counter level in Wh
-        _95_=$(echo ${_INVOICELOGAKTUELL_} | awk -F": " '{print $2}' | awk -F"," '{print $1}')          # Average Load der Caterva
+    #_95_=$(echo ${_INVOICELOGAKTUELL_} | awk -F": " '{print $2}' | awk -F"," '{print $1}')          # Average Load der Caterva
+    _95_=$(echo ${_UPTIME_} | awk -F": " '{print $2}' | awk -F"," '{print $1}')                     # Average Load der Caterva
 
 echo "${_JAHR_}-${_MONAT_}-${_TAG_}_${_UHRZEIT_} 3: ${_3_} 5: ${_5_} 7: ${_7_} 9: ${_9_} 11: ${_11_} 13: ${_13_} 15: ${_15_} 17: ${_17_} 19: ${_19_} 21: ${_21_} 23: ${_23_} 25: ${_25_} 27: ${_27_} 29: ${_29_} 31: ${_31_} 33: ${_33_} 35: ${_35_} 37: ${_37_} 39: ${_39_} 41: ${_41_} 43: ${_43_} 45: ${_45_} 47: ${_47_} 49: ${_49_} 51: ${_51_} 53: ${_53_} 55: ${_55_} 57: ${_57_} 59: ${_59_} 61: ${_61_} 63: ${_63_} 65: ${_65_} 67: ${_67_} 69: ${_69_} 71: ${_71_} 73: ${_73_} 75: ${_75_} 77: ${_77_} 79: ${_79_} 81: ${_81_} 83: ${_83_} 85: ${_85_} 87: ${_87_} 89: ${_89_} 91: ${_91_} 93: ${_93_} 95: ${_95_}" >> ${_ESS_MINUTENFILE_}
 

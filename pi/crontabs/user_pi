@@ -1,22 +1,8 @@
 # Crontab aus https://github.com/ac-caterva/webserver/pi/crontabs/user_pi
-# Stand 2021-01-10
-# Notice that tasks will be started based on the cron's system
-# daemon's notion of time and timezones.
-# 
-# Output of the crontab jobs (including errors) is sent through
-# email to the user the crontab file belongs to (unless redirected).
-# 
-# For example, you can run a backup of all your user accounts
-# at 5 a.m every week with:
-# 0 5 * * 1 tar -zcf /var/backups/home.tgz /home/
-# 
-# For more information see the manual pages of crontab(5) and cron(8)
-# 
+#
+# Date: 2021-01-10
+#
 # m h  dom mon dow   command
-
+#
 # Copy Caterva log file invoiceLog.csv every minute
-* * * * * /var/caterva/scripts/copy_log.sh
-
-# Automatische Verteilung der Daten aus dem Repository webserver-public
-# m h  dom mon dow   command - jeden Montag um 04:00 Uhr
-#AC# 0 4 * * 1 ( /home/pi/Git-Clones/webserver-public/GetChangesFromGitHub.sh ; /home/pi/Git-Clones/webserver-public/updateFromWebserver-public.sh )
+* * * * * /var/caterva/scripts/copy_log.sh 
