@@ -57,6 +57,22 @@ Installation:
 @reboot /home/admin/bin/BusinessOptimumStarter.sh start
 ```
 
+Danach die Caterva rebooten mit
+```
+sudo shutdown -r now
+```
+
+Business Optimum Starter wird beim booten gestartet und 
+sorgt dann dafuer, dass BO immer laeuft. Wenn du erst 
+einmal ohne reboot der Caterva BOS und BO testen willst, 
+dann  mit
+
+```
+BusinessOptimumStarter.sh start &
+```
+
+den BOS starten. Sieh dir die weiter oben genannetn log Dateien von BO und BOS an um zu pruefen ob BOS und BO laufen.
+
 ## Betreiben des Business Optimum
 
 ### Standalone

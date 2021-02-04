@@ -39,7 +39,7 @@ trap 'func_exit' 1 2 15
 echo $$ > $LOCK_FILE
 
 
-if ( [ -f ${_ESS_MINUTENFILE_} ] ) ; then
+if ( [ -s ${_ESS_MINUTENFILE_} ] ) ; then
 	_INVOICELOG_=$(tail -n 1 ${_ESS_MINUTENFILE_})
 else 
 	sudo touch  ${_ESS_MINUTENFILE_}
