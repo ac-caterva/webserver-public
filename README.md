@@ -67,6 +67,7 @@ Fast-forward
 Die Daten, die vom github geladen wurden muessen jetzt noch auf die Pi verteilt werden. Dazu bitte das folgende Kommando eingeben:
 
 ```
+pi@raspberrypi:~ $ cd Git-Clones/webserver-public/   
 pi@raspberrypi:~/Git-Clones/webserver-public $ ./Copy2PiVerteilung.sh 
 ```
 
