@@ -15,7 +15,7 @@ Bitte gebt als Benutzer pi auf der Pi die folgenden Kommandos ein:
 
 ```
 pi@raspberrypi:~ $ cd Git-Clones/
-pi@raspberrypi:~/Git-Clones $ git clone https://github.com/ac-caterva/webserver-public.git
+pi@raspberrypi:~/Git-Clones $ git clone git://github.com/ac-caterva/webserver-public.git
 ```
 
 Damite erstellt ihr eine lokale Kopie des Repos auf der Pi.
