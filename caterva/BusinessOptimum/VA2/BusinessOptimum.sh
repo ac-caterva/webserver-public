@@ -1,69 +1,12 @@
 #!/bin/bash
 ### BEGIN INFO
 # Provides: Business Optimization
-#
-# chargeStandbyThreshold_hyst:		Charging routine will stop, when "chargeStandbyThreshold_hyst" has been reached
-# dischargeStandbyThreshold:		Discharging immediately, when "dischargeStandbyThreshold" exceeded
-# dischargeStandbyThreshold_delay:	Discharging only, when "dischargeStandbyThreshold_delay" has been exceeded > "counter_standby_to_discharge_max"
-# dischargeStandbyThreshold_hyst:	Discharging routine will stop, when "dischargeStandbyThreshold_hyst" has been reached
-# Charching until "SoC_max" reached; sets "ChargedFlag", which ensures that until reaching "SoC_charge" only discharge is possible
-#
-# Log: /home/admin/bin/BusinessOptimum.log
-# Standby is forced due to file '/home/admin/registry/noPVBuffering'
-# /home/admin/registry/chargeStandbyThreshold   		- not existing or standard value: 400.00
-# /home/admin/registry/dischargeStandbyThreshold 		- not existing or standard value: 300.00
-#
-# Status  ---  cat /home/admin/registry/noPVBuffering   - not existing: PVBuffering / existing: noPVBuffering
-#              cat /tmp/ChargedFlag						- '0' charge/discharge possible
-#														- '1' discharge only
-#														- "-1" force charging
-#
-#              Balancing								- '0' Balancing not active (Standard-Balancing)
-#														- '1' Balancing active (Standard-Balancing)
-#
-# Stop BusinessOptimum
-# touch /tmp/BusinessOptimumStop
-#
-## set Module-Balancing/Cell-Balancing based on existing file content
-# -- Start of Module-Balancing:
-# touch /var/log/ModuleBalancing						Status via /tmp/ModuleBalancingActive
-# rsh admin@caterva "touch /var/log/ModuleBalancing"
-# -- Start of Cell-Balancing:
-# touch /tmp/CellBalancing							Status via /tmp/CellBalancingActive
-# rsh admin@caterva "touch /tmp/CellBalancing"
-## ForcedCharging:
-# 														Status via /tmp/ForcedChargingActive
-## BusinessOptimum (normal operations):
-# 														Status via /tmp/BusinessOptimumActive
-## BusinessOptimum (ECS3 as Grid-Meter):
-# 														Status via /tmp/BusinessOptimumGrid
-#
-# System_Running=$(swarmBcSend "LLN0.Mod.stVal")
-# System_Initialization=$(swarmBcSend "LLN0.Init.stVal")
-# U_cell_minV=$(swarmBcSend "MBMS1.MinV.mag.f")
-# U_cell_maxV=$(swarmBcSend "MBMS1.MaxV.mag.f")
-# BMU_current_max=$(swarmBcSend "MBMS1.MaxA.mag.f")
-# BMU_current_min=$(swarmBcSend "MBMS1.MaxA.mag.f")
-#
-# SoC_int=$(swarmBcSend "MBMS1.SocDC.stVal")
-# CPOL1_Mod=$(swarmBcSend "CPOL1.Mod.stVal")
-# PVandHH=$(swarmBcSend "MMXU4.TotW.mag.f")
-# Inv_Request=$(swarmBcSend "ZINV1.TotW.mxVal.f")
-## activate device:
-# swarmBcSend "LLN0.Mod.ctlVal=1" > /dev/null
-# System_Activated=$(swarmBcSend "LLN0.Mod.ctlVal")
-# Inverter Loading
-# swarmBcSend "CPOL1.Wchrg.setMag.f=1000"				# 1000W
-# swarmBcSend "CPOL1.OffsetDuration.setVal=3000"		# 3000s
-# date +%s												# Determine current time
-# swarmBcSend "CPOL1.OffsetStart.setVal=1604344838" 	# Start
-
-# Siegfried Quinger - VA20_2021-01-24_18.00
+# Siegfried Quinger - VA20_2021-02-06_10.00
 ### END INFO
 
 
 #-------------------------------------------------------------------------------------------------------------------
-version="VA20_2021-01-24_18.00"
+version="VA20_2021-02-06_10.00"
 #-------------------------------------------------------------------------------------------------------------------
 
 
@@ -125,11 +68,16 @@ rm -f /home/admin/registry/noPVBuffering
 rm -f /tmp/ChargedFlag
 rm -f /tmp/BusinessOptimumStop
 rm -f /tmp/BusinessOptimumActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/BusinessOptimumActive"
 rm -f /tmp/ModuleBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/ModuleBalancingActive"
 rm -f /tmp/CellBalancing
 rm -f /tmp/CellBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/CellBalancingActive"
 rm -f /tmp/ForcedChargingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/ForcedChargingActive"
 rm -f /tmp/BusinessOptimumGrid
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/BusinessOptimumGrid"
 # Remove request files of ModuleBalancing of BusinessOptimum
 rm -f /var/log/ModuleBalancing
 
@@ -164,6 +112,7 @@ echo ---------------------------------------------------------------------------
 
 # reset operation status: delete BusinessOptimumActive
 rm -f /tmp/BusinessOptimumActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/BusinessOptimumActive"
 
 # Restart only when BusinessOptimumStarter is not configured: Status: "0"
 if [[ $BusinessOptimum_BOS == "0" ]]; then
@@ -840,11 +789,16 @@ source /home/admin/bin/loadTools
 rm -f /tmp/ChargedFlag
 rm -f /tmp/BusinessOptimumStop
 rm -f /tmp/BusinessOptimumActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/BusinessOptimumActive"
 rm -f /tmp/ModuleBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/ModuleBalancingActive"
 rm -f /tmp/CellBalancing
 rm -f /tmp/CellBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/CellBalancingActive"
 rm -f /tmp/ForcedChargingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/ForcedChargingActive"
 rm -f /tmp/BusinessOptimumGrid
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/BusinessOptimumGrid"
 
 rm -f /tmp/BusinessOptimum.tmp
 rm -f /tmp/balanceBatteryModules.tmp
@@ -1055,6 +1009,7 @@ function_exit
 
 # set operation status: BusinessOptimumActive
 touch /tmp/BusinessOptimumActive
+sshpass -p pi ssh pi@192.168.0.50 "touch /tmp/BusinessOptimumActive"
 
 # Verify if ModuleBalancing shall be started
 if [ -f /var/log/ModuleBalancing ]; then
@@ -1170,6 +1125,7 @@ if ( ( [ $SoC_module_diff_int -ge 8 ] && [ $SoC_module_diff_int -le 15 ] && [ $d
 touch /var/log/ModuleBalancing
 # set operation status: ModuleBalancingActive
 touch /tmp/ModuleBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "touch /tmp/ModuleBalancingActive"
 
 ModuleBalancing_int=0	# Reset ModuleBalancing, - depening on SoC_module_diff certain power ranges will be enabled for charging
 # Display / Print Battery Status
@@ -1567,6 +1523,7 @@ fi
 
 # reset operation status: delete ModuleBalancingActive
 rm -f /tmp/ModuleBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/ModuleBalancingActive"
 
 fi
 #====================================================================================================================
@@ -1587,6 +1544,7 @@ if ( [ $U_cell_diff_V_int -ge 35 ] && [ $date_H_int -ge 10 ] && [ $date_H_int -l
 touch /tmp/CellBalancing
 # set operation status: CellBalancingActive
 touch /tmp/CellBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "touch /tmp/CellBalancingActive"
 
 # Start Balancing of Cells, only when system is working/running
 System_Running=$(swarmBcSend "LLN0.Mod.stVal")
@@ -1629,6 +1587,7 @@ rm -f  /tmp/CellBalancing
 
 # reset operation status: delete CellBalancingActive
 rm -f /tmp/CellBalancingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/CellBalancingActive"
 
 echo "" >> ${_LOGFILE_}
 echo "-----------------------------------------------------" >> ${_LOGFILE_}
@@ -1760,7 +1719,7 @@ fi
 
 # set operation status: ForcedChargingActive
 touch /tmp/ForcedChargingActive
-
+sshpass -p pi ssh pi@192.168.0.50 "touch /tmp/ForcedChargingActive"
 
 
 printf -v time_current_sec_epoch_int %.0f $(date +%s) # Unix Epoch Time
@@ -1839,6 +1798,7 @@ counter_forced_charging_int=$(awk '{print $1+1}' <<<"${counter_forced_charging_i
 
 # reset operation status: delete ForcedChargingActive
 rm -f /tmp/ForcedChargingActive
+sshpass -p pi ssh pi@192.168.0.50 "rm -f /tmp/ForcedChargingActive"
 
 fi
 
