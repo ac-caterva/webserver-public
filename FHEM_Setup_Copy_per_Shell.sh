@@ -2,7 +2,7 @@
 
 # Diese Script sollte nur einmal gestartet werden.
 
-if [ -f /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run ]
+if [ -f /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run2 ]
 then
     echo " Das Scripte $0 wurde bereits einmal ausgefuehrt."
     echo ""
@@ -33,7 +33,7 @@ sudo chown fhem:dialout /opt/fhem/.ssh/config /opt/fhem/.ssh/id_rsa /opt/fhem/.s
 sudo chmod 775 /var/caterva/data
 sudo chmod 775 /var/caterva/logs
 
-touch /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run
+touch /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run2
 
 echo ""
 echo "$0: Alles erledigt!"
