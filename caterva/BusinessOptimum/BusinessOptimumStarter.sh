@@ -35,9 +35,10 @@ function func_exit ()
 	DATE=`date +"%a %F %T" `
 	echo "BOS: Stoppe BusinessOptimumStarter  : $DATE" >> $BOS_LOG_FILE
 
+    touch $BOS_STOP_FILE
     touch $BO_STOP_FILE
 
-    sleep 10 
+    sleep 20 
     DATE=`date +"%a %F %T" `
     BO_IS_RUNNING=`ps -ef | grep -v grep | grep "$BO_PID" | grep "BusinessOptimum.sh"| wc -l`
     if ( [ "$BO_IS_RUNNING" -eq 1 ] ) ; then
@@ -60,7 +61,6 @@ function func_cleanup ()
     func_delete_BO_PID_file
     func_delete_BOS_PID_file
     func_delete_BO_STOP_file
-    func_delete_BOS_STOP_file
 }
 
 ##############################################
@@ -186,6 +186,7 @@ case $1 in
         DATE=`date +"%a %F %T" `
         echo -e "\nBOS: BusinessOptimumStarter beendet: $DATE (PID = $MY_PID)\n" >> $BOS_LOG_FILE
         func_cleanup
+        func_delete_BOS_STOP_file
         ;;
     stop )
         func_is_script_startet DO_I_RUN BOS_RUN_PID BO_RUN_PID
@@ -198,7 +199,8 @@ case $1 in
                 DATE=`date +"%a %F %T" `
                 echo -e "\nBOS: BusinessOptimumStarter wird gestoppt: $DATE (PID = $BOS_RUN_PID)"
                 echo -e "BOS: BusinessOptimum.sh: $DATE (PID = $BO_RUN_PID)\n"
-                kill -1 $BOS_RUN_PID
+                touch $BOS_STOP_FILE
+                touch $BO_STOP_FILE
                 exit 0
                 ;;
             2 )
