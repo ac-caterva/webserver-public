@@ -9,13 +9,13 @@ Erst mal ein paar ganz wichtige Infos fuer diejenigen, die sich mit Github auske
 
 Ihr koennt euch - wie in den folgenden Abschnitten beschrieben -  selbst die aktuellste Version unserer SW auf der Pi installieren. Dazu muesst ihr einmalig das Repo clonen.  Ab dann koennt ihr immer mal wieder nachsehen ob es einen neue Verison gibt und diese dann auf der Pi verteilen.
 
-
 ## Einmalige Taetigkeiten zum clonen (herunterladen) des Repo
+
 Bitte gebt als Benutzer pi auf der Pi die folgenden Kommandos ein:
 
-```
-pi@raspberrypi:~ $ cd Git-Clones/
-pi@raspberrypi:~/Git-Clones $ git clone git://github.com/ac-caterva/webserver-public.git
+```bash
+cd /home/pi/Git-Clones/
+git clone git://github.com/ac-caterva/webserver-public.git
 ```
 
 Damite erstellt ihr eine lokale Kopie des Repos auf der Pi.
@@ -24,20 +24,22 @@ Damite erstellt ihr eine lokale Kopie des Repos auf der Pi.
 
 Der Update besteht immer aus 2 Schritten:
 1. Die neueste Version vom Github laden
-1. Die Daten verteilen
-
+1. Die Daten auf die Pi und die Caterva verteilen
 
 ### 1. Die neueste Version vom Github laden
-```
-pi@raspberrypi:~ $ cd Git-Clones/webserver-public/
-pi@raspberrypi:~/Git-Clones/webserver-public $ ./GetChangesFromGitHub.sh 
+
+Dazu auf der Pi die folgenden Kommandos eingeben:
+
+```bash
+cd /home/pi/Git-Clones/webserver-public/
+./GetChangesFromGitHub.sh 
 ```
 
 Ausgabe des Kommandos:
  
 Da ihr eben erste gecloned habt sieht die Meldung jetzt wie folgt aus:
 
-```
+```bash
 Von https://github.com/ac-caterva/webserver-public
  * branch            HEAD       -> FETCH_HEAD
 Bereits aktuell.
@@ -46,7 +48,7 @@ pi@raspberrypi:~/Git-Clones/webserver-public $
 
 Sollte es inzwischen Aenderungen am Repo gegeben haben, dann sieht die Ausgabe so aehnlich aus wie hier:
 
-```
+```bash
 remote: Enumerating objects: 23, done.
 remote: Counting objects: 100% (23/23), done.
 remote: Compressing objects: 100% (2/2), done.
@@ -64,16 +66,16 @@ Fast-forward
 
 ### 2. Die Daten verteilen
 
-Die Daten, die vom github geladen wurden muessen jetzt noch auf die Pi verteilt werden. Dazu bitte das folgende Kommando eingeben:
+Die Daten, die vom github geladen wurden muessen jetzt noch auf die Pi und die Caterva verteilt werden. Dazu bitte das folgende Kommando eingeben:
 
-```
-pi@raspberrypi:~ $ cd Git-Clones/webserver-public/   
-pi@raspberrypi:~/Git-Clones/webserver-public $ ./Copy2PiVerteilung.sh 
+```bash
+cd /home/pi/Git-Clones/webserver-public/   
+./Copy2PiVerteilung.sh 
 ```
 
-Die Ausgabe des Kommandos - kann variieren, je nachdem was zu erledigen ist. Hier also ein Beispiel der Ausgabe:
+Die Ausgabe des Kommandos kann variieren, je nachdem was zu erledigen ist. Hier also ein Beispiel der Ausgabe:
 
-```
+```bash
 =========================================================
 2021-02-04_17:46:11: Update started
              REPO_BASEDIR: /home/pi/Git-Clones/webserver-public
@@ -94,11 +96,49 @@ Starting post-update
 pi@raspberrypi:~/Git-Clones/webserver-public $ 
 ```
 
-So das wars. Eure Pi ist jetzt auf dem neuesten Stand.
+Dann noch die Verteilung auf die Caterva starten:
+
+```bash
+cd /home/pi/Git-Clones/webserver-public/ 
+./Copy2CatervaVerteilung.sh
+```
+
+Die Ausgabe des Kommandos kann variieren, je nachdem was zu erledigen ist. Hier also ein Beispiel der Ausgabe:
+
+```bash
+=========================================================
+2021-02-22_01:34:08: Update started
+             REPO_BASEDIR: /home/pi/Git-Clones/webserver-public
+=========================================================
+2021-02-22_01:34:08: Start processing of file: caterva/analysis/uli_Abfrage_Status.sh
+File caterva/analysis/uli_Abfrage_Status.sh differs from bin/uli_Abfrage_Status.sh
+Starting rsync
+2021-02-22_01:34:18: Finish processing of file: caterva/analysis/uli_Abfrage_Status.sh
+=========================================================
+2021-02-22_01:34:18: Start processing of file: caterva/analysis/uli_invoice_aktuell_online.sh
+File caterva/analysis/uli_invoice_aktuell_online.sh differs from bin/uli_invoice_aktuell_online.sh
+Starting rsync
+2021-02-22_01:34:26: Finish processing of file: caterva/analysis/uli_invoice_aktuell_online.sh
+=========================================================
+2021-02-22_01:34:26: Start processing of file: caterva/analysis/uli_invoice_Wirkungsgrad_online.sh
+File caterva/analysis/uli_invoice_Wirkungsgrad_online.sh differs from bin/uli_invoice_Wirkungsgrad_online.sh
+Starting rsync
+2021-02-22_01:34:32: Finish processing of file: caterva/analysis/uli_invoice_Wirkungsgrad_online.sh
+=========================================================
+2021-02-22_01:34:32: Start processing of file: caterva/analysis/BC_Check.sh
+File caterva/analysis/BC_Check.sh differs from bin/BC_Check.sh
+Starting rsync
+2021-02-22_01:34:38: Finish processing of file: caterva/analysis/BC_Check.sh
+=========================================================
+2021-02-22_01:34:38: Update finished
+=========================================================
+```
+
+So das wars. Eure Pi und die Caterva sind jetzt auf dem neuesten Stand.
 
 ## Protokolldatei
 
-Alle Aktionen und Fehler werden in die Datei `/var/caterva/logs/Copy2PiVerteilung.log` protokolliert.
+Alle Aktionen und Fehler werden in die Dateien `/var/caterva/logs/Copy2PiVerteilung.log` und `/var/caterva/logs/Copy2CatervaVerteilung.log` protokolliert.
 
 ## Probleme ?
 
