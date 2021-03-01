@@ -140,7 +140,12 @@ So das wars. Eure Pi und die Caterva sind jetzt auf dem neuesten Stand.
 
 Alle Aktionen und Fehler werden in die Dateien `/var/caterva/logs/Copy2PiVerteilung.log` und `/var/caterva/logs/Copy2CatervaVerteilung.log` protokolliert.
 
-## Probleme ?
+## Probleme / Fragen
 
-&#10067; Bei Problemen bitte in diesem [Repo](https://github.com/ac-caterva/webserver-public/issues/new/choose) oder im [private webserver Repo](https://github.com/ac-caterva/webserver/issues/new/choose) ein Issue eroeffnen. &#10067; <br>
-&#10067; Wer sich mit dem Github nicht anfreunden will/kann, darf seine Probleme auch gerne im [Discord](https://discord.com/channels/592654792212348928/672912964210262028) melden &#10067;
+Bei Problemen oder Fragen bitte ein Issue anlegen: https://github.com/ac-caterva/webserver-public/issues/new/choose <br>
+
+Wer sich mit dem Github nicht anfreunden will/kann, darf seine Probleme auch gerne im [Discord](https://discord.com/channels/592654792212348928/672912964210262028) melden. 
+
+# Unterstützung
+
+Die initiale Konfiguration der Pi, die Verteilung der SD Karten und die Erstellung der notwendigen Scripte ist mein Beitrag zu unserem gemeinsamen Ziel unsere Speicher weiterhin sinnvoll zu nutzen. Wer auf freiwilliger Basis eine Anerkennung geben will, kann dies hier tun https://paypal.me/pools/c/8xm3QGRS7x
