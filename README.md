@@ -148,4 +148,4 @@ Wer sich mit dem Github nicht anfreunden will/kann, darf seine Probleme auch ger
 
 # Unterstützung
 
-Die initiale Konfiguration der Pi, die Verteilung der SD Karten und die Erstellung der notwendigen Scripte ist mein Beitrag zu unserem gemeinsamen Ziel unsere Speicher weiterhin sinnvoll zu nutzen. Wer auf freiwilliger Basis eine Anerkennung geben will, kann dies hier tun https://paypal.me/pools/c/8xm3QGRS7x
+Die initiale Konfiguration der Pi, die Verteilung der SD Karten und die Erstellung der notwendigen Scripte ist mein Beitrag zu unserem gemeinsamen Ziel unsere Speicher weiterhin sinnvoll zu nutzen. Wer auf freiwilliger Basis eine Anerkennung geben will, kann dies hier tun https://paypal.me/pools/c/8xm58ob2st 
