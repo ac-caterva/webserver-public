@@ -5,6 +5,7 @@
 #   Ausgabe mit Markdown - Header 2 und Monospaced Text
 #   Variable _LOGFILE_
 #   sleep0.3 => sleep 0.3
+#v4 Erweiterung automatischer Zaehlerkonfigurations (incl. emulierte) webserver Issues 19
 
 echo -e "\033[1;36m Script zum Abfragen des Systemzustandes eines Caterva Speichersystems!\033[0m"
 
@@ -44,6 +45,12 @@ echo " " | tee -a ${_LOGFILE_}
 echo -e "## Abfrage konfigurierte Kontroller Status und Zaehlerkonfiguration" | tee -a ${_LOGFILE_}
 echo -e "\n\`\`\`" >> ${_LOGFILE_}
 swarmBcStatus <<< j 2>&1 | tee -a ${_LOGFILE_} 
+echo -e "\`\`\`" >> ${_LOGFILE_}
+echo " " | tee -a ${_LOGFILE_}
+
+echo -e "## Abfrage automatische Zaehlerkonfiguration (incl. emulierte)" | tee -a ${_LOGFILE_}
+echo -e "\n\`\`\`" >> ${_LOGFILE_}
+tail -n 20 /home/swarm-device/business-controller/resources/config/serial.properties <<< j 2>&1 | tee -a ${_LOGFILE_} 
 echo -e "\`\`\`" >> ${_LOGFILE_}
 echo " " | tee -a ${_LOGFILE_}
 
