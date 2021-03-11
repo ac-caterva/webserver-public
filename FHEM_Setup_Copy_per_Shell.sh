@@ -16,11 +16,18 @@ echo " Das Scripte $0 wird jetzt einmalig ausgefuehrt."
 sudo usermod -a -G pi fhem
 
 # ssh Zugang fuer User fhem
+[ ! -d /opt/fhem/.ssh ] && { 
+    sudo mkdir /opt/fhem/.ssh
+    sudo chmod 600 /opt/fhem/.ssh
+    sudo chown fhem:dialout /opt/fhem/.ssh
+} 
+
 sudo cp /home/pi/.ssh/config  	   /opt/fhem/.ssh/config
 sudo cp /home/pi/.ssh/id_rsa       /opt/fhem/.ssh/id_rsa
 sudo cp /home/pi/.ssh/known_hosts  /opt/fhem/.ssh/known_hosts
 
 sync
+
 
 sudo chmod 600 /opt/fhem/.ssh/config
 sudo chmod 600 /opt/fhem/.ssh/id_rsa
