@@ -18,7 +18,7 @@ sudo usermod -a -G pi fhem
 # ssh Zugang fuer User fhem
 [ ! -d /opt/fhem/.ssh ] && { 
     sudo mkdir /opt/fhem/.ssh
-    sudo chmod 600 /opt/fhem/.ssh
+    sudo chmod 700 /opt/fhem/.ssh
     sudo chown fhem:dialout /opt/fhem/.ssh
 } 
 
