@@ -2,7 +2,7 @@
 
 # Diese Script sollte nur einmal gestartet werden.
 
-if [ -f /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run2 ]
+if [ -f /home/pi/Git-Clones/.FHEM_Setup_Copy_per_Shell.did_run3 ]
 then
     echo " Das Scripte $0 wurde bereits einmal ausgefuehrt."
     echo ""
