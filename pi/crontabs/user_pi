@@ -6,3 +6,5 @@
 #
 # Copy Caterva log file invoiceLog.csv every minute
 * * * * * /var/caterva/scripts/copy_log.sh 
+# Update Pi if requested
+* * * * * /var/caterva/scripts/update_Pi.sh
