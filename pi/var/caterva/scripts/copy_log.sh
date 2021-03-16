@@ -48,11 +48,18 @@ else
 fi	
 
 
+
+_UPTIME_=$(ssh admin@192.168.0.222 "uptime")
+# Exit if Caterva is not reachable
+STATUS=$?
+[ ${STATUS} != 0 ] && func_exit
+
+
 _INVOICELOGAKTUELL_=$(ssh admin@192.168.0.222 "tail -n 2 /var/log/invoiceLog.csv | grep -v '^#' | tail -n 1 ") 
-_UPTIME_=$(ssh admin@192.168.0.222 "uptime") 
 _BATTERYLOGAKTUELL_=$(ssh admin@192.168.0.222 "tail -n 2 /var/log/batteryLog.csv | grep -v '^#' | tail -n 1 ") 
 
-if [ ! "$(echo ${_INVOICELOG_} | cut -d ";" -f1)" == "$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f1)" ]
+
+if [ ! "$(echo ${_INVOICELOG_} | cut -d " " -f1 | cut -d "_" -f2)" == "$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f2 | cut -d " " -f2)" ]
 then
 	_JAHR_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f2 | cut -c7-10)
 	_MONAT_=$(echo ${_INVOICELOGAKTUELL_} | cut -d ";" -f2 | cut -c4-5)
@@ -113,3 +120,4 @@ echo "${_JAHR_}-${_MONAT_}-${_TAG_}_${_UHRZEIT_} 3: ${_3_} 5: ${_5_} 7: ${_7_} 9
 fi
 
 func_exit
+
