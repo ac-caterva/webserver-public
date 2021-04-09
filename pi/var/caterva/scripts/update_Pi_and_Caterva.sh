@@ -46,6 +46,7 @@ if ( [ -f ${TRIGGER_FILE} ] ) ; then
 	func_rm_trigger_file
 	$REPO_DIR/GetChangesFromGitHub.sh
 	$REPO_DIR/Copy2PiVerteilung.sh
+	$REPO_DIR/Copy2CatervaVerteilung.sh
 fi	
 
 func_exit
