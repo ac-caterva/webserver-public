@@ -20,7 +20,7 @@ git clone git://github.com/ac-caterva/webserver-public.git
 
 Damit erstellt ihr eine lokale Kopie des Repos auf der Pi.
 
-olltet ihr folgenden Fehlermeldung erhalten: `fatal: Zielpfad 'webserver-public' existiert bereits und ist kein leeres Verzeichnis.` Dann bitte mit dem Abschnitt **Repo auf den neuesten Stand bringen** weiter machen. Ansonsten geht es mit dem Abschnitt **Update auf der Pi starten** weiter.
+Solltet ihr folgenden Fehlermeldung erhalten: `fatal: Zielpfad 'webserver-public' existiert bereits und ist kein leeres Verzeichnis.` Dann bitte mit dem Abschnitt **Repo auf den neuesten Stand bringen** weiter machen. Ansonsten geht es mit dem Abschnitt **Update auf der Pi starten** weiter.
 
 ### Repo auf den neuesten Stand bringen
 
