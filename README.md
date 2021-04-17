@@ -7,7 +7,7 @@ Erst mal ein paar ganz wichtige Infos fuer diejenigen, die sich mit Github auske
 
 **Nun zur Doku fuer alle:**
 
-Ihr koennt euch - wie in den folgenden Abschnitten beschrieben -  selbst die aktuellste Version unserer SW auf der Pi installieren. Dazu muesst ihr einmalig das Repo clonen.  Ab dann koennt ihr immer mal wieder nachsehen ob es einen neue Verison gibt und diese dann auf der Pi verteilen.
+Ihr koennt euch - wie in den folgenden Abschnitten beschrieben -  selbst die aktuellste Version unserer SW auf der Pi installieren. Dazu muesst ihr einmalig das Repo clonen und die Verteilung starten. Ab dann wird die Pi und die Caterva automatisch aktualisiert.
 
 ## Einmalige Taetigkeiten zum clonen (herunterladen) des Repo
 
@@ -21,50 +21,6 @@ git clone git://github.com/ac-caterva/webserver-public.git
 Damite erstellt ihr eine lokale Kopie des Repos auf der Pi.
 
 ## Update auf der Pi starten
-
-Der Update besteht immer aus 2 Schritten:
-1. Die neueste Version vom Github laden
-1. Die Daten auf die Pi und die Caterva verteilen
-
-### 1. Die neueste Version vom Github laden
-
-Dazu auf der Pi die folgenden Kommandos eingeben:
-
-```bash
-cd /home/pi/Git-Clones/webserver-public/
-./GetChangesFromGitHub.sh 
-```
-
-Ausgabe des Kommandos:
- 
-Da ihr eben erste gecloned habt sieht die Meldung jetzt wie folgt aus:
-
-```bash
-Von https://github.com/ac-caterva/webserver-public
- * branch            HEAD       -> FETCH_HEAD
-Bereits aktuell.
-pi@raspberrypi:~/Git-Clones/webserver-public $
-```
-
-Sollte es inzwischen Aenderungen am Repo gegeben haben, dann sieht die Ausgabe so aehnlich aus wie hier:
-
-```bash
-remote: Enumerating objects: 23, done.
-remote: Counting objects: 100% (23/23), done.
-remote: Compressing objects: 100% (2/2), done.
-remote: Total 12 (delta 7), reused 12 (delta 7), pack-reused 0
-Entpacke Objekte: 100% (12/12), Fertig.
-Von https://github.com/ac-caterva/webserver-public
- * branch            HEAD       -> FETCH_HEAD
-Aktualisiere 982aaf4..7252d1f
-Fast-forward
- Verteilung/Readme.md               |  2 +-
- caterva/BusinessOptimum/Readme.md  | 18 +++++++++++++++++-
- pi/var/caterva/scripts/copy_log.sh |  2 +-
- 3 files changed, 19 insertions(+), 3 deletions(-)
-```
-
-### 2. Die Daten verteilen
 
 Die Daten, die vom github geladen wurden muessen jetzt noch auf die Pi und die Caterva verteilt werden. Dazu bitte das folgende Kommando eingeben:
 
@@ -134,7 +90,7 @@ Starting rsync
 =========================================================
 ```
 
-So das wars. Eure Pi und die Caterva sind jetzt auf dem neuesten Stand.
+So das wars. Eure Pi und die Caterva sind jetzt auf dem neuesten Stand. UND: Die Aktualisierung erfolgt ab sofort automatisch. Ihr braucht weiter nichts mehr zu tun.
 
 ## Protokolldatei
 
