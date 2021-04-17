@@ -94,12 +94,19 @@ function TargetDirExists ()
 {
 	TARGET_DIR=`dirname $TARGET`
 	TARGET_DIR_EXISTS=`ssh -n admin@caterva "if [ -d $TARGET_DIR ] ; then echo 1; else echo 0; fi "`
-	if  [ $TARGET_DIR_EXISTS = 1 ]  ; then
+	if  [ "$TARGET_DIR_EXISTS" = 1 ]  ; then
 		return 0
 	else
-		LogError "Target directory of file $TARGET does not exist"
-		LogMessage "Datei $SOURCE wird nicht kopiert"
-	    LogFinishedFileMessage
+		if [ "$TARGET_DIR_EXISTS" = 0 ]  ; then
+			LogError "Target directory of file $TARGET does not exist"
+			LogMessage "Datei $SOURCE wird nicht kopiert"
+			LogFinishedFileMessage
+		else 
+			if [ "$TARGET_DIR_EXISTS" = "" ]  ; then
+				LogError "Caterva is not reachable"
+				LogFinishedFileMessage	
+			fi	
+		fi	
 		return 1
 	fi
 }
@@ -108,7 +115,7 @@ function RsyncCheckForUpdate ()
 {
 	FILENAME=`basename $SOURCE`
 	FILE_TO_COPY=`rsync -n -i --checksum $REPO_BASEDIR/$SOURCE admin@caterva:$TARGET | cut -d" " -f2`
-	if [ $FILENAME = "$FILE_TO_COPY" ] ; then
+	if [ "$FILENAME" = "$FILE_TO_COPY" ] ; then
 		LogMessage "File $SOURCE differs from $TARGET"
 		return 0 # DO_UPDATE
 	else
