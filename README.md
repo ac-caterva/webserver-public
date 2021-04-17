@@ -18,7 +18,37 @@ cd /home/pi/Git-Clones/
 git clone git://github.com/ac-caterva/webserver-public.git
 ```
 
-Damite erstellt ihr eine lokale Kopie des Repos auf der Pi.
+Damit erstellt ihr eine lokale Kopie des Repos auf der Pi.
+
+olltet ihr folgenden Fehlermeldung erhalten: `fatal: Zielpfad 'webserver-public' existiert bereits und ist kein leeres Verzeichnis.` Dann bitte mit dem Abschnitt **Repo auf den neuesten Stand bringen** weiter machen. Ansonsten geht es mit dem Abschnitt **Update auf der Pi starten** weiter.
+
+### Repo auf den neuesten Stand bringen
+
+Fuer alle, die das Repo bereits gecloned hatten. Ihr muesst statt dem clonen des Repos das Repo einmal manuell auf den aktuellen Stand bringen. 
+Dazu auf der Pi die folgenden Kommandos eingeben:
+
+```bash
+cd /home/pi/Git-Clones/webserver-public/
+./GetChangesFromGitHub.sh 
+```
+
+Ausgabe des Kommandos:
+
+```bash
+remote: Enumerating objects: 23, done.
+remote: Counting objects: 100% (23/23), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 12 (delta 7), reused 12 (delta 7), pack-reused 0
+Entpacke Objekte: 100% (12/12), Fertig.
+Von https://github.com/ac-caterva/webserver-public
+ * branch            HEAD       -> FETCH_HEAD
+Aktualisiere 982aaf4..7252d1f
+Fast-forward
+ Verteilung/Readme.md               |  2 +-
+ caterva/BusinessOptimum/Readme.md  | 18 +++++++++++++++++-
+ pi/var/caterva/scripts/copy_log.sh |  2 +-
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+```
 
 ## Update auf der Pi starten
 
