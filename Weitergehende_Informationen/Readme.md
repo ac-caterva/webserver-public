@@ -6,7 +6,7 @@ Hier findet ihr Tipps und Tricks von Caterva Besitzern, die so freundlich waren 
 
 Hier findet ihr alle Informationen zum Thema **Umbau auf den hausdienlichen Betrieb der Caterva**.
 
-Author: SN096 Anton Köszegi
+Autor: SN096 Anton Köszegi
 
 [Link zum Dokument](https://github.com/ac-caterva/webserver-public/blob/main/Weitergehende_Informationen/Hausdienlicher_Betrieb_fuer_Dummies.md)
 
@@ -16,7 +16,7 @@ Eine Beschreibung der notwendigen Taetigkeiten um den bei SONY Anlagen immer wie
 
 Damit die darin erwaehnten Dateien `polMaxPV.100` und `polMaxPV.orig` auf euere Anlagen kopiert werden, muesst ihr- falls noch nicht geschehen - die Anweisungen in dieser [Anleitung](https://github.com/ac-caterva/webserver-public#einmalige-taetigkeiten-zum-clonen-herunterladen-des-repo) ausfuehren.
 
-Author: SN231 Andreas Wandler
+Autor: SN231 Andreas Wandler
 
 [Link zum Dokument](https://github.com/ac-caterva/webserver-public/blob/main/Weitergehende_Informationen/PDF_Beheben_der_SOC_Absturze_fur_Sony_Akkus_ohne_Business_Optimum.pdf)
 
@@ -24,6 +24,6 @@ Author: SN231 Andreas Wandler
 
 Wie PDF_Beheben_der_SOC_Absturze_fur_Sony_Akkus_ohne_Business_Optimum.pwdf, aber als Word Dokument. Wenn ihr Verbesserungsvorschlaege habt koennt ihr diese im Dokument - am besten vorher die Aenderungsverfolgung anschalten - vornehmen und die Aenderungsvorschlaege an den Author senden.
 
-Author: SN231 Andreas Wandler
+Autor: SN231 Andreas Wandler
 
 [Link zum Dokument](https://github.com/ac-caterva/webserver-public/blob/main/Weitergehende_Informationen/DOC_Beheben_der_SOC_Absturze_fur_Sony_Akkus_ohne_Business_Optimum.docx)
