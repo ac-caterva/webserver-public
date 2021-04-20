@@ -1,6 +1,6 @@
 # Weitergehende Informationen fuer den Betrieb der Caterva
 
-Hier findet ihr Tipps und Tricks von Caterva Besitzern, die so freundlich waren ihre eigenen Erfahrungen zu dokumentieren und der Community zur Verfuegung zu stellen. Ihr seid alle aufgerufen es genauso zu machen. Also wenn ihr eine wichtige Information habt, die ihr an alle weiter geben wollt, dann kontaktiert mich (anja@anjachristian.com bzw. SN245 Anja Christian im Discord). Ich werde euch dabei helfen eure Infos allen zur Verfuegung zu stellen. Genauso git: wer an den bereits zur Verfuegung gestellten Dokumenten Fehler findet oder Verbesserungsvorschlaege hat, kann sich an den Author des Dokumentes oder an mich wenden. Unusere Community lebt von der Vielfalt unserer Mitgleider und jeder kann sich beteiligen.
+Hier findet ihr Tipps und Tricks von Caterva Besitzern, die so freundlich waren ihre eigenen Erfahrungen zu dokumentieren und der Community zur Verfuegung zu stellen. Ihr seid alle aufgerufen es genauso zu machen. Also wenn ihr eine wichtige Information habt, die ihr an alle weiter geben wollt, dann kontaktiert mich (anja@anjachristian.com bzw. SN245 Anja Christian im Discord). Ich werde euch dabei helfen eure Infos allen zur Verfuegung zu stellen. Genauso git: wer an den bereits zur Verfuegung gestellten Dokumenten Fehler findet oder Verbesserungsvorschlaege hat, kann sich an den Author des Dokumentes oder an mich wenden. Unsere Community lebt von der Vielfalt unserer Mitgleider und jeder kann sich beteiligen.
 
 ## Hausdienlicher_Betrieb_fuer_Dummies.md
 
