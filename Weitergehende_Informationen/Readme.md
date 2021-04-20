@@ -12,7 +12,9 @@ Author: SN096 Anton Köszegi
 
 ## PDF_Beheben_der_SOC_Absturze_fur_Sony_Akkus_ohne_Business_Optimum.pdf
 
-Eine Beschreibung der notwendigen Taetigkeiten um den bei SONY Anlagen immer wieder auftretenden SoC (State of Charge) Sprung zu beheben.
+Eine Beschreibung der notwendigen Taetigkeiten um den bei SONY Anlagen immer wieder auftretenden SoC (State of Charge) Sprung zu beheben. 
+
+Damit die darin erwaehnten Dateien `polMaxPV.100` und `polMaxPV.orig` auf euere Anlagen kopiert werden, muesst ihr- falls noch nicht geschehen - die Anweisungen in dieser [Anleitung](https://github.com/ac-caterva/webserver-public#einmalige-taetigkeiten-zum-clonen-herunterladen-des-repo) ausfuehren.
 
 Author: SN231 Andreas Wandler
 
