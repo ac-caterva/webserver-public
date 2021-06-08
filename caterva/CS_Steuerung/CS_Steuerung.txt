@@ -1,0 +1,6 @@
+90;87;3000;-1500;nein
+# Erste Spalte bis zu diesem Wert soll der Speicher geladen werden			default: 90
+# Zweite Spalte bis zu diesem Wert geht die entladehystere				default: 87
+# Dritte Spalte ab diesem Wert in Watt beginnt die Anlage mit einspeichern		default: 3000
+# Vierte Spalte ab diesem Wert in Watt beginnt die Anlage zum ausspeichern		default: -1500
+# Fuenfte Spalte Automatisches balancen der Module nur bei Sony Anlagen			default: nein
