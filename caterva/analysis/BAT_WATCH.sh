@@ -9,7 +9,7 @@ then
 	echo "Laufzeit der Abfragefunktion im Script ca 64 Sekunden!"
 	exit 3
 else 
-	if ( [ $1 -lt 60 ] || [ $1 -gt 600 ] )
+	if ( [ $1 -lt 10 ] || [ $1 -gt 600 ] )
 	then
 		echo "Intervallzeit nicht im Toleranzbereich"
 		exit 3
