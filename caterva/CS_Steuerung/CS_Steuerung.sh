@@ -12,9 +12,16 @@
 # v13 nicht klar wann _SOCDCSPRUNG_ gesetzt wurde (eventuell Neustart batterylog.csv) zusaetzlicher Logeintrag mit timestamp
 # v14 Konfigfile /home/admin/bin/CS_Steuerung.txt integriert
 # v15 Anpassung func_maxPV_unterschied wenn Module mehr als 15 Prozent auseinader kein autoladen, Ladeleistung wir zu stark runtergeregelt von caterva
+# v16 Werte aus Konfigfile auf Sinnhaftigkeit pruefen
+# v17 Link auf Logfile und le und ge auf lt un gt geaendert Werte angepasst
 
 _DATUM_=$(date +"%Y-%m-%d_%H-%M")
 _LOGFILE_=/var/log/CS_Steuerung_${_DATUM_}.txt
+# Logfilelink loeschen falls vorhaden und neu anlegen
+if [ -L /home/admin/bin/CS_Steuerung.log ] ; then
+	rm -f /home/admin/bin/CS_Steuerung.log
+fi	
+ln -s /var/log/CS_Steuerung_${_DATUM_}.txt /home/admin/bin/CS_Steuerung.log
 _CS_STRG_INVOICELOG=/tmp/CS_Strg_invoiceLog.csv
 _CS_STRG_BATTERYLOG=/tmp/CS_Strg_batteryLog.csv
 
@@ -42,13 +49,43 @@ if [ -f /home/admin/bin/CS_Steuerung.txt ] ; then
 	if [ ! "$(head -n 1 /home/admin/bin/CS_Steuerung.txt)" == "${_KONFIG_}" ] ; then
 		_SOCMAX_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f1)
 		printf -v _SOCMAX_ %.0f $_SOCMAX_
+		if ( [ $_SOCMAX_ -lt 50 ] || [ $_SOCMAX_ -gt 90 ] )
+		then
+			echo "Wert bis zu welchem Speicherstand geladen werden soll nicht aktzeptiert muss zwischen 50-90 liegen ist ${_SOCMAX_}! Abbruch"
+			exit 3
+		fi
  		_SOCHYSTERESE_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f2)
 		printf -v _SOCHYSTERESE_ %.0f $_SOCHYSTERESE_
+		if ( [ $_SOCHYSTERESE_ -lt 20 ] || [ $_SOCHYSTERESE_ -ge $_SOCMAX_ ] )
+		then
+			echo "Ladehysteresewert muss groeßer 20 sein und unter Speicherladestand. Wert ist ${_SOCHYSTERESE_}! Abbruch"
+			exit 3
+		fi
 		_SCHWELLEOBEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f3)
 		printf -v _SCHWELLEOBEN_ %.0f $_SCHWELLEOBEN_
+		if ( [ $_SCHWELLEOBEN_ -lt 500 ] || [ $_SCHWELLEOBEN_ -gt 6000 ] )
+		then
+			echo "Schwelle ab wann eingespeichert wird muss zwischen 500 und 6000 Watt liegen ist ${_SCHWELLEOBEN_}! Abbruch"
+			exit 3
+		fi
 		_SCHWELLEUNTEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f4)
 		printf -v _SCHWELLEUNTEN_ %.0f $_SCHWELLEUNTEN_
+		if ( [ $_SCHWELLEUNTEN_ -lt -6000 ] || [ $_SCHWELLEUNTEN_ -gt -500 ] )
+		then
+			echo "Schwelle ab wann ausgespeichert wird muss zwischen -500 und -6000 Watt liegen ist ${_SCHWELLEUNTEN_}! Abbruch"
+			exit 3
+		fi
 		_AUTOLADEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f5)
+		case $_AUTOLADEN_ in
+			ja) 
+		;;
+			nein) 
+		;;
+			*) 
+			echo " Autoladen darf nur ja oder nein sein, ist ${_AUTOLADEN_}! Abbruch"
+			exit 3
+		 ;;
+		esac
 		echo "Parameter aus Konfigfile gelesen:" | tee -a ${_LOGFILE_}
 		echo "SOC Maximalwert eingestellt ${_SOCMAX_}" | tee -a ${_LOGFILE_}
 		echo "SOC Hysterese eingestellt ${_SOCHYSTERESE_}" | tee -a ${_LOGFILE_}
@@ -246,8 +283,8 @@ function func_maxPV_unterschied ()
                                 printf -v _SOCMODULEMIN_ %.0f $_SOCMODULEMIN_
                         fi
                 done
-		if [ $((${_SOCMODULEMAX_}-${_SOCMODULEMIN_})) -ge 50 ] ; then			
-			if [ $((${_SOCMODULEMAX_}-${_SOCMODULEMIN_})) -le 160 ] ; then
+		if [ $((${_SOCMODULEMAX_}-${_SOCMODULEMIN_})) -gt 40 ] ; then			
+			if [ $((${_SOCMODULEMAX_}-${_SOCMODULEMIN_})) -lt 160 ] ; then
 				echo "Aufladen auf 100 Prozent gestartet da Module mehr wie 4 Prozent Differenz haben Dauer 2 Std laden 1 Std Ruhe" | tee -a ${_LOGFILE_} 
 				func_laden
 			else

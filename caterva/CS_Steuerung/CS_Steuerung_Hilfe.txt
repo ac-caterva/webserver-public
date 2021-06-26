@@ -1,0 +1,30 @@
+# Ein paar grundlegende Befehle/Infos für CS_Steuerung:
+#
+# Crontab Benutzer admin die naechste Zeile ohne # mit "crontab -e"  eintragen
+# @reboot /home/admin/bin/CS_Steuerung.sh 
+#
+# Wenn das CS_Steuerungs.txt File im Verzeichnis /home/admin/bin liegt werden die Werte daraus genommen.
+# Ist es nicht vorhanden werden default Werte genommen.
+# Veränderungen werden alle 10 Minuten geprüft und übernommen. (immer wenn die Uhrzeit Minuten hinten 0 hat)
+# Die Veränderung wird im Logfile ausgegeben/dokumentiert.
+# Anschauen Logfile:
+# cat /var/log/CS_Steuerung.log            enter
+#
+# Live mitschauen was ins Logfile geschrieben wird:
+# tail -f /var/log/CS_Steuerung.log        enter
+#
+# Anschauen Konfigfile:
+# cat CS_Steuerungs.txt    enter       In der ersten Zeile stehen die Konfigurationen darunter was sie bedeuten.
+#
+# Verändern Konfigurationsfile:
+# vi CS_Steuerungs.txt      enter     das File wird angezeigt 
+# i                                   es wird in den Einfügemodus gewechselt
+# mit den Pfeiltasten auf den zu ändernden Wert gehen und tippen, alte Werte löschen auf Syntax achten
+# strg + c                            der Einfügemodus wird beendet
+# :wq                                 das File abspeichern
+# Wenn man sich nicht sicher ist oder man das File nicht abspeichern möchte
+# strg + c                            der Einfügemodus wird beendet
+# :q!                                 das File wird geschlossen und nicht abgespeichert
+#
+# Die Veränderung kann dann wie oben beschrieben überprüft werden.
+
