@@ -14,6 +14,7 @@
 # v15 Anpassung func_maxPV_unterschied wenn Module mehr als 15 Prozent auseinader kein autoladen, Ladeleistung wir zu stark runtergeregelt von caterva
 # v16 Werte aus Konfigfile auf Sinnhaftigkeit pruefen
 # v17 Link auf Logfile und le und ge auf lt un gt geaendert Werte angepasst
+# v18 alle exit duch func_exit ersetzte, func_Stopfile_exist fuer Starter oder FHEM hinzugefuegt
 
 _DATUM_=$(date +"%Y-%m-%d_%H-%M")
 _LOGFILE_=/var/log/CS_Steuerung_${_DATUM_}.txt
@@ -52,28 +53,28 @@ if [ -f /home/admin/bin/CS_Steuerung.txt ] ; then
 		if ( [ $_SOCMAX_ -lt 50 ] || [ $_SOCMAX_ -gt 90 ] )
 		then
 			echo "Wert bis zu welchem Speicherstand geladen werden soll nicht aktzeptiert muss zwischen 50-90 liegen ist ${_SOCMAX_}! Abbruch"
-			exit 3
+			func_exit
 		fi
  		_SOCHYSTERESE_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f2)
 		printf -v _SOCHYSTERESE_ %.0f $_SOCHYSTERESE_
 		if ( [ $_SOCHYSTERESE_ -lt 20 ] || [ $_SOCHYSTERESE_ -ge $_SOCMAX_ ] )
 		then
 			echo "Ladehysteresewert muss groeßer 20 sein und unter Speicherladestand. Wert ist ${_SOCHYSTERESE_}! Abbruch"
-			exit 3
+			func_exit
 		fi
 		_SCHWELLEOBEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f3)
 		printf -v _SCHWELLEOBEN_ %.0f $_SCHWELLEOBEN_
 		if ( [ $_SCHWELLEOBEN_ -lt 500 ] || [ $_SCHWELLEOBEN_ -gt 6000 ] )
 		then
 			echo "Schwelle ab wann eingespeichert wird muss zwischen 500 und 6000 Watt liegen ist ${_SCHWELLEOBEN_}! Abbruch"
-			exit 3
+			func_exit
 		fi
 		_SCHWELLEUNTEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f4)
 		printf -v _SCHWELLEUNTEN_ %.0f $_SCHWELLEUNTEN_
 		if ( [ $_SCHWELLEUNTEN_ -lt -6000 ] || [ $_SCHWELLEUNTEN_ -gt -500 ] )
 		then
 			echo "Schwelle ab wann ausgespeichert wird muss zwischen -500 und -6000 Watt liegen ist ${_SCHWELLEUNTEN_}! Abbruch"
-			exit 3
+			func_exit
 		fi
 		_AUTOLADEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f5)
 		case $_AUTOLADEN_ in
@@ -83,7 +84,7 @@ if [ -f /home/admin/bin/CS_Steuerung.txt ] ; then
 		;;
 			*) 
 			echo " Autoladen darf nur ja oder nein sein, ist ${_AUTOLADEN_}! Abbruch"
-			exit 3
+			func_exit
 		 ;;
 		esac
 		echo "Parameter aus Konfigfile gelesen:" | tee -a ${_LOGFILE_}
@@ -366,6 +367,17 @@ function func_10Minuten_Abfragen ()
 }
 
 #########################################
+# Pruefen ob Stopfile existiert fuer CS_SteuerungStarter
+function func_Stopfile_exist ()
+{
+	if ( [ -f /tmp/CS_SteuerungStop ] ) ; then
+		echo "CS_Steuerung.sh ist wegen Stopfile /tmp/CS_SteuerungStop File beendet worden!" | tee -a ${_LOGFILE_}
+		func_exit
+	fi
+}
+
+
+#########################################
 #MAIN
 #########################################
 
@@ -377,7 +389,7 @@ sudo pkill -SIGTERM agetty
 # Abbrechen wenn BO laeuft unbekannte Wechselwirkungen
 if [ ! $(ps aux | grep -c "[B]usinessOptimum.sh") = 0 ] ; then
 	echo "BusinessOptimum.sh laeuft auf dieser Anlage, das ist nicht erprobt es wird abgebrochen!!!" | tee -a ${_LOGFILE_}
-	exit 0
+	func_exit
 fi
 # Konfig einlesen aus File oder default
 func_Konfig_einlesen
@@ -388,6 +400,7 @@ func_cleanup_files
 
 while true
 do
+	func_Stopfile_exist
 	func_Daten_holen
 	func_log_aktuell
 	echo "${_AKTTIME_} Durchschnitt: hh ${_DURCHSHH_} PV ${_DURCHSPV_} PVHH ${_DURCHSPVHH_} Aktuell: Status Inv ${_INVSTATUS_}  SOCDC ${_SOCDC_} Laden WR ${_LADENINV_} ENTLADEN WR ${_ENTLADENINV_}" | tee -a ${_LOGFILE_} 
