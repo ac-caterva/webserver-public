@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Starte CS_Steuerung.sh beim booten via crontab des Benutzers admin
+# Starte CS_Steuerung.sh beim booten via crontab des Benutzers admin, dabei
+#  wird CS_Steuerung.sh gestartet
 # Stoppe CS-Steuerung.sh, wenn die STOPP-Datei angelegt wurde
 # Starte CS_STeuerung.sh, wenn die START-Datei angelegt wurde
 
@@ -15,7 +16,6 @@ CS_STRG_S_START_FILE=/tmp/CS_SteuerungStarterStart
 CS_STRG_OUT_FILE=/var/log/CS_Steuerung.out
 CS_STRG_PID_FILE=/tmp/CS_Steuerung.pid
 CS_STRG_STOP_FILE=/tmp/CS_SteuerungStop
-CS_STRG_START_FILE=/tmp/CS_SteuerungStart
 
 MY_PID=$$
 
@@ -42,7 +42,7 @@ function func_exit ()
     touch $CS_STRG_S_STOP_FILE
     touch $CS_STRG_STOP_FILE
 
-    sleep 20 
+    sleep 120 
     DATE=`date +"%a %F %T" `
     CS_STRG_IS_RUNNING=`ps -ef | grep -v grep | grep "$CS_STRG_PID" | grep "CS_Steuerung.sh"| wc -l`
     if ( [ "$CS_STRG_IS_RUNNING" -eq 1 ] ) ; then
@@ -64,7 +64,7 @@ function func_cleanup ()
 {
     func_delete_CS_STRG_PID_file
     func_delete_CS_STRG_S_PID_file
-    func_delete_CS_STRG_STOP_file
+    #func_delete_CS_STRG_STOP_file
 }
 
 ##############################################
@@ -159,7 +159,7 @@ func_usage $*
 
 case $1 in 
     start )
-        # Laeuft das Script evtl. noch?
+        # Laeuft das Starter Script evtl. noch?
         func_is_script_startet DO_I_RUN CS_STRG_S_RUN_PID CS_STRG_RUN_PID
         if ( [ "$DO_I_RUN" -eq 1 ] ) ; then
             echo -e "\nCS_STRG_S: CS_SteuerungStarter is already running (PID = $CS_STRG_S_RUN_PID)"
@@ -168,9 +168,8 @@ case $1 in
         fi
 
         func_delete_CS_STRG_S_STOP_file
-        func_delete_CS_STRG_STOP_file
 
-        # Sichere PID 
+        # Sichere PID vom Starter Script
         echo $MY_PID > $CS_STRG_S_PID_FILE
 
         # Vermerke Start des CS_STRG_S im log
@@ -179,12 +178,16 @@ case $1 in
 
         COUNT=1
 
-        #Starte das CS_STRG Script
         while [ ! -f $CS_STRG_S_STOP_FILE ]
         do
-            # Sollte aus irgendeinem Grund das Script nicht laufen wird mit dem sleep sicher 
-            # gestellt, dass das System nicht ueberlastet wird.
-            [ $COUNT -gt 1 ] && sleep 5
+        # Starte das CS_STRG Script
+            if ( [ -f $CS_STRG_STOP_FILE ] ); then
+                # CS_STRG soll nicht gestartet werden
+                DATE=`date +"%a %F %T"`
+                echo -e "CS_STRG_S: CS_Steuerung.sh soll nicht gestartet werden: $DATE\n" >> $CS_STRG_S_LOG_FILE
+                sleep 60
+                continue
+            fi
             DATE=`date +"%a %F %T" `
             echo -n "CS_STRG_S: CS_Steuerung.sh gestartet: $DATE ($COUNT)" >> $CS_STRG_S_LOG_FILE
             touch $CS_STRG_PID_FILE
@@ -197,15 +200,19 @@ case $1 in
                 wait $CS_STRG_PID
                 DATE=`date +"%a %F %T" `
                 echo "CS_STRG_S: CS_Steuerung.sh beendet  : $DATE ($COUNT) (PID = $CS_STRG_PID)" >> $CS_STRG_S_LOG_FILE
+                # Sollte aus irgendeinem Grund das Script nicht laufen wird mit dem sleep sicher 
+                # gestellt, dass das System nicht ueberlastet wird.
+                [ $COUNT -gt 1 ] && sleep 30
                 COUNT=$(expr "$COUNT" + 1)
             fi
             func_delete_CS_STRG_PID_file            
         done
-
+        # Starter Script soll gestoppt werden
         DATE=`date +"%a %F %T" `
         echo -e "\nCS_STRG_S: CS_SteuerungStarter beendet: $DATE (PID = $MY_PID)\n" >> $CS_STRG_S_LOG_FILE
         func_cleanup
         func_delete_CS_STRG_S_STOP_file
+        exit
         ;;
     stop )
         func_is_script_startet DO_I_RUN CS_STRG_S_RUN_PID CS_STRG_RUN_PID
@@ -228,6 +235,7 @@ case $1 in
                 exit $DO_I_RUN
                 ;;
         esac
+        exit
         ;;
     status )
         func_is_script_startet DO_I_RUN CS_STRG_S_RUN_PID CS_STRG_RUN_PID
@@ -247,9 +255,11 @@ case $1 in
                 exit $DO_I_RUN
                 ;;
         esac
+        exit
         ;;
     * ) 
         echo "$0: wrong parameter: $1"
         func_usage
+        exit
         ;;    
 esac
