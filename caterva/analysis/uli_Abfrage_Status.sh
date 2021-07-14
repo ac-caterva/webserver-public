@@ -50,7 +50,7 @@ echo " " | tee -a ${_LOGFILE_}
 
 echo -e "## Abfrage automatische Zaehlerkonfiguration (incl. emulierte)" | tee -a ${_LOGFILE_}
 echo -e "\n\`\`\`" >> ${_LOGFILE_}
-tail -n 20 /home/swarm-device/business-controller/resources/config/serial.properties <<< j 2>&1 | tee -a ${_LOGFILE_} 
+tail -n 22 /home/swarm-device/business-controller/resources/config/serial.properties <<< j 2>&1 | tee -a ${_LOGFILE_} 
 echo -e "\`\`\`" >> ${_LOGFILE_}
 echo " " | tee -a ${_LOGFILE_}
 
