@@ -15,7 +15,10 @@
 # v16 Werte aus Konfigfile auf Sinnhaftigkeit pruefen
 # v17 Link auf Logfile und le und ge auf lt un gt geaendert Werte angepasst
 # v18 alle exit duch func_exit ersetzte, func_Stopfile_exist fuer Starter oder FHEM hinzugefuegt
-
+# v19 Vergleichsoperator in func_Daten_holen von "e" auf "eq" korrigiert
+# v20 2 func_maxPV Bedingung von 89 auf ${_SOCHYSTERESE_} gestellt, CS_Steuerung.cfg (persoenliche Konfig) und txt (default Konfig) gesplittet 
+# v21 Fehler Konfig wird alle 10 Minuten eingelesen, fasches File angegeben
+ 
 _DATUM_=$(date +"%Y-%m-%d_%H-%M")
 _LOGFILE_=/var/log/CS_Steuerung_${_DATUM_}.txt
 # Logfilelink loeschen falls vorhaden und neu anlegen
@@ -26,7 +29,7 @@ ln -s /var/log/CS_Steuerung_${_DATUM_}.txt /home/admin/bin/CS_Steuerung.log
 _CS_STRG_INVOICELOG=/tmp/CS_Strg_invoiceLog.csv
 _CS_STRG_BATTERYLOG=/tmp/CS_Strg_batteryLog.csv
 
-echo "Script einfach in Konsole starten oder ueber crontab mit Pruefung ob es scho läeuft." | tee -a ${_LOGFILE_}
+echo "Mit dem Befehl cat CS_Steuerung_Hilfe.txt lesen" | tee -a ${_LOGFILE_}
 echo "ES wird der Duchschnitt der letzten 60 Sekundne gebildet, dieser Wert wird dann mit den in Variablen gesetzten Werten verglichen." | tee -a ${_LOGFILE_}
 echo "Variable ab wann eingespeichert wird _SCHWELLEOBEN_" | tee -a ${_LOGFILE_}
 echo "Variable ab wann ausgespeichert wird _SCHWELLEUNTEN_" | tee -a ${_LOGFILE_}
@@ -36,15 +39,81 @@ echo "SOC Hysterese nach oben wenn einmal 90 erreicht wirde erst unter 87 wieder
 echo "Bei Sony-Anlagen wird wenn der SOC bei 90 ist es zwischen 13:00 und 13:59 uhr ist und die Module 4 Prozent auseinder sind mit pvstrom laden auf 100 %," | tee -a ${_LOGFILE_} 
 echo "oder wenn Module auf 10 % springen. Diese automatische laden muss mit der Variable _AUTOLADEN_=ja im Script gesetzt werden!" | tee -a ${_LOGFILE_}
 echo " " | tee -a ${_LOGFILE_}
-echo "Wenn das testen beendet wird sollten diese 2 Befehle zur Sicherheit gesetzt werden." | tee -a ${_LOGFILE_}
-echo "rm /home/admin/registry/noPVBuffering" | tee -a ${_LOGFILE_}
-echo "echo \"0.90\" > /home/admin/registry/polMaxPV" | tee -a ${_LOGFILE_}
-
 
 ########################################
 # Konfigwerte ueber File auslesen beim Starten des Scripts und alle 10 Minuten falls es geaendert wird 
-# Pruefen ob Files /home/admin/bin/CS_Steuerung.txt existiert, wenn ja die Werte verwenden ansonsten Defaultwerte verwenden.
+# Pruefen ob Files /home/admin/bin/CS_Steuerung.cfg existiert, wenn ja die Werte verwenden ansonsten Defaultwerte verwenden.
 function func_Konfig_einlesen() 
+{
+if [ -f /home/admin/bin/CS_Steuerung.cfg ] ; then
+	if [ ! "$(head -n 1 /home/admin/bin/CS_Steuerung.cfg)" == "${_KONFIG_}" ] ; then
+		_SOCMAX_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f1)
+		printf -v _SOCMAX_ %.0f $_SOCMAX_
+		if ( [ $_SOCMAX_ -lt 50 ] || [ $_SOCMAX_ -gt 90 ] )
+		then
+			echo "Wert bis zu welchem Speicherstand geladen werden soll nicht aktzeptiert muss zwischen 50-90 liegen ist ${_SOCMAX_}!" | tee -a ${_LOGFILE_}
+			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
+			func_Konfig_einlesen_default
+			return
+ 		fi
+ 		_SOCHYSTERESE_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f2)
+		printf -v _SOCHYSTERESE_ %.0f $_SOCHYSTERESE_
+		if ( [ $_SOCHYSTERESE_ -lt 20 ] || [ $_SOCHYSTERESE_ -ge $_SOCMAX_ ] )
+		then
+			echo "Ladehysteresewert muss groeßer 20 sein und unter Speicherladestand. Wert ist ${_SOCHYSTERESE_}!"  | tee -a ${_LOGFILE_}
+			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
+			func_Konfig_einlesen_default
+			return
+		fi
+		_SCHWELLEOBEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f3)
+		printf -v _SCHWELLEOBEN_ %.0f $_SCHWELLEOBEN_
+		if ( [ $_SCHWELLEOBEN_ -lt 500 ] || [ $_SCHWELLEOBEN_ -gt 6000 ] )
+		then
+			echo "Schwelle ab wann eingespeichert wird muss zwischen 500 und 6000 Watt liegen ist ${_SCHWELLEOBEN_}! "  | tee -a ${_LOGFILE_}
+			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
+			func_Konfig_einlesen_default
+			return
+		fi
+		_SCHWELLEUNTEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f4)
+		printf -v _SCHWELLEUNTEN_ %.0f $_SCHWELLEUNTEN_
+		if ( [ $_SCHWELLEUNTEN_ -lt -6000 ] || [ $_SCHWELLEUNTEN_ -gt -500 ] )
+		then
+			echo "Schwelle ab wann ausgespeichert wird muss zwischen -500 und -6000 Watt liegen ist ${_SCHWELLEUNTEN_}! " | tee -a ${_LOGFILE_}  
+			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
+			func_Konfig_einlesen_default
+			return
+		fi
+		_AUTOLADEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f5)
+		case $_AUTOLADEN_ in
+			ja) 
+		;;
+			nein) 
+		;;
+			*) 
+			echo " Autoladen darf nur ja oder nein sein, ist ${_AUTOLADEN_}! " | tee -a ${_LOGFILE_}
+			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
+			func_Konfig_einlesen_default
+			return
+		 ;;
+		esac
+		echo "Parameter aus Konfigfile gelesen:" | tee -a ${_LOGFILE_}
+		echo "SOC Maximalwert eingestellt ${_SOCMAX_}" | tee -a ${_LOGFILE_}
+		echo "SOC Hysterese eingestellt ${_SOCHYSTERESE_}" | tee -a ${_LOGFILE_}
+		echo "Leistungsgrenze einspeichern ${_SCHWELLEOBEN_}" | tee -a ${_LOGFILE_}
+		echo "Leistungsgrenze ausspeichern ${_SCHWELLEUNTEN_}" | tee -a ${_LOGFILE_}
+		echo "Automatischen laden aktiviert: ${_AUTOLADEN_}" | tee -a ${_LOGFILE_}
+		_KONFIG_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg)
+	fi
+else
+	echo "Kein Konfigile /home/admin/bin/CS_Steuerung.txt vohanden Defaultwerte verwenden." | tee -a ${_LOGFILE_}
+	func_Konfig_einlesen_default
+fi
+}
+
+
+########################################
+# Konfigwerte default setzten da CS_Steuerung.cfg nicht vorhanden oder falsch Werte gesetzt 
+function func_Konfig_einlesen_default() 
 {
 if [ -f /home/admin/bin/CS_Steuerung.txt ] ; then
 	if [ ! "$(head -n 1 /home/admin/bin/CS_Steuerung.txt)" == "${_KONFIG_}" ] ; then
@@ -112,7 +181,6 @@ else
 	echo "Leistungsgrenze ausspeichern ${_SCHWELLEUNTEN_}" | tee -a ${_LOGFILE_}
 	echo "Automatischen laden aktiviert: ${_AUTOLADEN_}" | tee -a ${_LOGFILE_}
 fi
-
 }
 
 
@@ -218,7 +286,7 @@ function func_Daten_holen ()
 	_SOCDC_=$(cut -d ";" -f6 $_CS_STRG_BATTERYLOG)
 	printf -v _SOCDC_ %.0f $_SOCDC_
 
-	if ([ ${_SOCDC_} -le 10 ] && [ ! ${_SOCDC_} -e 0 ]) ; then
+	if ([ ${_SOCDC_} -le 10 ] && [ ! ${_SOCDC_} -eq 0 ]) ; then
 	        echo "${_AKTTIME_} _SOCDCSPRUNG_ wird gesetzt _SOCDC_ = ${_SOCDC_}" | tee -a ${_LOGFILE_} 
 		_SOCDCSPRUNG_=yes
 	fi
@@ -266,7 +334,7 @@ function func_Hysterese_Einspeichern ()
 
 function func_maxPV_unterschied ()
 {
-	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "13" -a "${_BMMTYPE_}" == "sony" -a ${_SOCDC_} -ge 89 ] ; then 
+	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "13" -a "${_BMMTYPE_}" == "sony" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} ] ; then 
 		_SOCMODULEALL_=$(func_read_SoC_sony_modules)	
 		_SOCMODULEMAX_=890
 		for i in ${_SOCMODULEALL_}
@@ -297,7 +365,7 @@ function func_maxPV_unterschied ()
 
 function func_maxPV_sprung ()
 {
-	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "13" -a "${_BMMTYPE_}" == "sony" -a "${_SOCDCSPRUNG_}" == "yes" -a ${_SOCDC_} -ge 89 ] ; then 	
+	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "13" -a "${_BMMTYPE_}" == "sony" -a "${_SOCDCSPRUNG_}" == "yes" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} ] ; then 	
 		echo "Aufladen auf 100 Prozent gestartet da Module auf 10 Prozent oder darunter waren." | tee -a ${_LOGFILE_}	 
 		func_laden
 		_SOCDCSPRUNG_=no	
