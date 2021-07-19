@@ -253,6 +253,7 @@ case $1 in
                     * )
                         echo -e "CS_STRG_S: CS_Steuerung.sh (PID = $CS_STRG_RUN_PID)\n"
                         ;;
+                esac        
                 exit $DO_I_RUN
                 ;;
             2 )
