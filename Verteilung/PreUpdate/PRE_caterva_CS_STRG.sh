@@ -9,17 +9,17 @@ FILE_NO_DELETE_STOP_FILE=/tmp/NO_DEL_CS_SteuerungStop
 
 function StopFileExists ()
 {    
-    FILE_EXISTS=`ssh admin@caterva ls $CS_STRG_STOP_FILE 1>/dev/null 2>&1 ; echo $?`
+    FILE_EXISTS=`ssh -n admin@caterva ls $CS_STRG_STOP_FILE 1>/dev/null 2>&1 ; echo $?`
 }
 
 function NotDeleteStopFileAfterUpdate ()
 {
-    ssh admin@caterva touch $FILE_NO_DELETE_STOP_FILE
+    ssh -n admin@caterva touch $FILE_NO_DELETE_STOP_FILE
 }
 
 function CreateStopFile ()
 {
-    ssh admin@caterva touch $CS_STRG_STOP_FILE
+    ssh -n admin@caterva touch $CS_STRG_STOP_FILE
 }
 
 ###########################

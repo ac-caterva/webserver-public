@@ -4,9 +4,9 @@
 FILE_NAME=/home/admin/bin/CS_Steuerung.txt
 FILE_RIGHTS=444
 
-ssh admin@caterva chmod $FILE_RIGHTS $FILE_NAME
+ssh -n admin@caterva chmod $FILE_RIGHTS $FILE_NAME
 
-REAL_FILE_RIGHTS=`ssh admin@caterva stat -c '%a' $FILE_NAME`
+REAL_FILE_RIGHTS=`ssh -n admin@caterva stat -c '%a' $FILE_NAME`
 
 case $REAL_FILE_RIGHTS in
     $FILE_RIGHTS ) 
