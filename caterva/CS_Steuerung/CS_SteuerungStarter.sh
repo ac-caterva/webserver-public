@@ -246,7 +246,13 @@ case $1 in
                 ;;
             1 )
                 echo -e "\nCS_STRG_S: CS_SteuerungStarter is running (PID = $CS_STRG_S_RUN_PID)"
-                echo -e "CS_STRG_S: CS_Steuerung.sh (PID = $CS_STRG_RUN_PID)\n"
+                case $CS_STRG_RUN_PID in
+                    0 ) 
+                        echo -e "CS_STRG_S: CS_Steuerung.sh ist gestoppt\n"
+                        ;;
+                    * )
+                        echo -e "CS_STRG_S: CS_Steuerung.sh (PID = $CS_STRG_RUN_PID)\n"
+                        ;;
                 exit $DO_I_RUN
                 ;;
             2 )
