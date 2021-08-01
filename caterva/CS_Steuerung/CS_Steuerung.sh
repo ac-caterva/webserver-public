@@ -18,14 +18,14 @@
 # v19 Vergleichsoperator in func_Daten_holen von "e" auf "eq" korrigiert
 # v20 2 func_maxPV Bedingung von 89 auf ${_SOCHYSTERESE_} gestellt, CS_Steuerung.cfg (persoenliche Konfig) und txt (default Konfig) gesplittet 
 # v21 Fehler Konfig wird alle 10 Minuten eingelesen, fasches File angegeben
- 
-_DATUM_=$(date +"%Y-%m-%d_%H-%M")
-_LOGFILE_=/var/log/CS_Steuerung_${_DATUM_}.txt
+# v22 Datum bei Logfiles wieder rausgenommen, fuer Logrotaed webserver issues 33
+
+_LOGFILE_=/var/log/CS_Steuerung.log
 # Logfilelink loeschen falls vorhaden und neu anlegen
 if [ -L /home/admin/bin/CS_Steuerung.log ] ; then
 	rm -f /home/admin/bin/CS_Steuerung.log
 fi	
-ln -s /var/log/CS_Steuerung_${_DATUM_}.txt /home/admin/bin/CS_Steuerung.log
+ln -s /var/log/CS_Steuerung.log /home/admin/bin/CS_Steuerung.log
 _CS_STRG_INVOICELOG=/tmp/CS_Strg_invoiceLog.csv
 _CS_STRG_BATTERYLOG=/tmp/CS_Strg_batteryLog.csv
 

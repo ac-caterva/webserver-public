@@ -3,7 +3,7 @@
 # 
 REPO_BASE_DIR=/home/pi/Git-Clones/webserver
 
-# Install empty crontab
+# Install real crontab
 cat $REPO_BASE_DIR/pi/crontabs/user_pi | crontab -u pi -
 
 # make sure real crontab is installed

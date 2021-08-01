@@ -8,3 +8,5 @@
 * * * * * /var/caterva/scripts/copy_log.sh 
 # Update Pi and Caterva if requested
 * * * * * /var/caterva/scripts/update_Pi_and_Caterva.sh
+# every day, at 00:00, run log-rotate 
+00 0 * * * /home/pi/bin/log-cleanup.sh
