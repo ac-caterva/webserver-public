@@ -30,6 +30,25 @@ function Color_off ()
     echo -e "\033[0m"
 }
 
+function Read_Caterva_Type ()
+{
+    echo -e "\n---Bestimme den Anlagentyp"
+    if [ -f /home/admin/registry/out/gen1 ] ; then
+        TYPE=GEN1_SAFT
+    else
+        if [ -f /home/admin/registry/out/gen2 ] ; then
+            TYPE=GEN2_SAFT
+            IS_SONY=`grep -i sony /home/admin/registry/out/bmmType | wc -l`
+            if [ $IS_SONY -eq 1 ] ; then
+                TYPE=GEN2_SONY
+            fi
+        fi
+    fi   
+    Color_green_on
+    echo -e "Anlagentyp: $TYPE"     
+    Color_off
+}
+
 function Check_FS_var_log ()
 {
     echo -e "\n---Pruefe FS /var/log < 50% Usage"
@@ -55,9 +74,30 @@ function Check_number_of_invoiceLog ()
     fi
 }
 
-function Command_exist ()
+function Check_logrotate_of_invoiceLog ()
+{
+    echo -e "\n---Pruefe logrotate = 270 fuer invoiceLog Dateien "
+    NUMBER_OF_invoiceLog_rotate=`grep rotate /home/admin/bin/log-cleanup.conf | grep 270 | wc -l`
+
+    if [ $NUMBER_OF_invoiceLog_rotate -eq 1 ] ; then
+        Echo_ok
+    else    
+        Echo_nok
+    fi
+}
+
+function Command_should_not_run ()
 {
     if [ $1 -eq 0 ] ; then
+        Echo_ok
+    else    
+        Echo_nok
+    fi
+}
+
+function Command_should_run ()
+{
+    if [ $1 -eq 1 ] ; then
         Echo_ok
     else    
         Echo_nok
@@ -81,7 +121,18 @@ function Check_crontab ()
     echo -e "\n---Pruefe crontab Job $1 "
     COMMAND_EXISTS=`cat /etc/crontab | grep -v "#" | grep "$1"| wc -l`
 
-    Command_exist $COMMAND_EXISTS 
+    case $1 in
+        /home/admin/bin/swarmcomm.sh )
+            if [ $TYPE = GEN2_SAFT ] ; then
+                Command_should_run $COMMAND_EXISTS 
+            else
+                Command_should_not_run $COMMAND_EXISTS 
+            fi
+            ;;
+        * )
+            Command_should_not_run $COMMAND_EXISTS 
+            ;;
+    esac
 }
 
 function Check_etc_rclocal ()
@@ -89,7 +140,7 @@ function Check_etc_rclocal ()
     echo -e "\n---Pruefe /etc/rc.local"
     COMMAND_EXISTS=`cat /etc/rc.local | grep -v "#" | grep "iptables"| wc -l`
 
-    Command_exist $COMMAND_EXISTS 
+    Command_should_not_run $COMMAND_EXISTS 
 }
 
 function Check_date ()
@@ -100,12 +151,22 @@ function Check_date ()
     read _ANSWER_
 }
 
+function Warn_swarm_comm ()
+{
+    if [ $TYPE = GEN2_SAFT ] ; then
+        Color_red_on
+        echo "Anlagentyp ist $TYPE. Swarm Kommunikation darf nicht ausgeschlatet werden"
+        Color_off
+    fi
+}
+
 function Check_swarm_comm ()
 {
     echo -e "\n---Pruefe Datei /etc/init.d/swarm-comm\n"
     Color_turkis_on
     head -19 /etc/init.d/swarm-comm
     Color_off
+    Warn_swarm_comm
     echo -e "\nPruefe die Datei. \033[0;32m ENTER fuer weiter: \033[0m" 
     read _ANSWER_
 }
@@ -144,8 +205,10 @@ function Check_router ()
 #######################################
 # MAIN
 
+Read_Caterva_Type
 Check_FS_var_log
 Check_number_of_invoiceLog
+Check_logrotate_of_invoiceLog
 Check_crontab_log_cleanup
 Check_crontab /home/admin/bin/timeupdate
 Check_crontab /home/admin/bin/swarmcomm.sh
