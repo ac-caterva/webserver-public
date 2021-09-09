@@ -1,0 +1,15 @@
+mv K000222-SN000222-enc.crt     K000xxx-SN000xxx-enc.crt
+mv K000222-SN000222-enc.csr     K000xxx-SN000xxx-enc.csr
+mv K000222-SN000222-encPriv.key K000xxx-SN000xxx-encPriv.key
+mv K000222-SN000222-encPub.key  K000xxx-SN000xxx-encPub.key
+mv K000222-SN000222-sig.crt     K000xxx-SN000xxx-sig.crt
+mv K000222-SN000222-sig.csr     K000xxx-SN000xxx-sig.csr
+mv K000222-SN000222-sigPriv.key K000xxx-SN000xxx-sigPriv.key
+mv K000222-SN000222-sigPub.key  K000xxx-SN000xxx-sigPub.key
+mv K000222-SN000222-ssl.crt     K000xxx-SN000xxx-ssl.crt
+mv K000222-SN000222-ssl.csr     K000xxx-SN000xxx-ssl.csr
+mv K000222-SN000222-sslPriv.key K000xxx-SN000xxx-sslPriv.key
+mv K000222-SN000222-sslPub.key  K000xxx-SN000xxx-sslPub.key
+mv SN000222.crt SN000xxx.crt
+mv SN000222.csr SN000xxx.csr
+mv SN000222.key SN000xxx.key

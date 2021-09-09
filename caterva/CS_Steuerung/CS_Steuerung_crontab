@@ -1,0 +1,11 @@
+# Crontab aus https://github.com/ac-caterva/webserver/caterva/CS_Steuerung/CS_Steuerung_crontab
+#
+# Date: 2021-09-02
+#
+# m h  dom mon dow   command
+
+# CS Steuerung nach reboot starten
+@reboot /home/admin/bin/CS_SteuerungStarter.sh start
+#
+# taegliche Ausfuehrung des log-rotate fuer log der CS_Steuerung
+00 0 * * * /home/admin/bin/CS_log-cleanup.sh
