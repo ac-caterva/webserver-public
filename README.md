@@ -126,6 +126,116 @@ So das wars. Eure Pi und die Caterva sind jetzt auf dem neuesten Stand. UND: Die
 
 Alle Aktionen und Fehler werden in die Dateien `/var/caterva/logs/Copy2PiVerteilung.log` und `/var/caterva/logs/Copy2CatervaVerteilung.log` protokolliert.
 
+## CS Steuerung aktivieren
+
+ Sollte euere Pi noch nicht automatisch aktualisert werden, dann muesst ihr zuerst die Schritte aus den Kapiteln 
+  - [Einmalige Taetigkeiten zum clonen (herunterladen) des Repo](https://github.com/ac-caterva/webserver-public#einmalige-taetigkeiten-zum-clonen-herunterladen-des-repo)
+
+  - [Update auf der Pi starten](https://github.com/ac-caterva/webserver-public#update-auf-der-pi-starten)
+
+in diesem Dokument durchfuehren.
+
+Wenn eure Pi automatisch aktualisiert wird, dann koennt ihr die CS Steuerung auf eurer Caterva aktivieren.
+
+Dazu sind folgende Schritte notwendig:
+
+1. Anmelden auf der Caterva
+2. Ein Kommando auf der Caterva ausfuehren
+3. Abmelden von der Caterva
+
+Solltet ihr unsicher sein, dann meldet euch bitte wie im Kapitel **[Probleme / Fragen](https://github.com/ac-caterva/webserver-public#probleme--fragen)** beschrieben und wir helfen gerne.
+
+Hier nun die Schritte im Detail.
+
+### 1. Anmelden auf der Caterva
+
+Auf der Pi im LXTerminal folgendes Kommando eingeben:
+
+`ssh admin@caterva`
+
+Danach seid ihr auf der Caterva angemeldet. Das sollte etwa so aussehen:
+
+```
+pi@raspberrypi:~ $ ssh admin@caterva
+ __  __ _                
+|  \/  (_) ___ _ __ ___  
+| |\/| | |/ __| '__/ _ \ 
+| |  | | | (__| | | (_) |
+|_|  |_|_|\___|_|  \___/ 
+                         
+
+Welcome to ARMBIAN Debian GNU/Linux 8 (jessie) 4.6.3-sunxi 
+System load:   4.06             Up time:       1 day          Local users:   2            
+Memory usage:  29 % of 997Mb    IP:            192.168.0.222 192.168.88.222 
+CPU temp:      61°C           
+Usage of /:    53% of 4.0G   
+
+
+Business controller status:
+
+ - Systemzeit: 09.09.2021 13:55:31
+ - Release /home/admin/release/bin.zip (2019-03-18, 01:43:31) ist bereit zur Installation
+ - Ein Release wurde bereits nach /home/swarm-device/business-controller installiert:
+   - Built:   2019-03-06, 15:37:54
+   - Version: stable
+   - Author:  swarm @ Caterva GmbH
+ - Gerät ist registriert für K000245 mit SN000245:
+   - Maximale Haushaltsleistung: 25633 W (bzw. 8544 W / Phase)
+   - Maximale PV-Leistung:       9900 W
+   - Haushaltsverbrauch:         6473 kWh p.a.
+   - Lastwiderstand:             nicht aktiviert
+   - Zähler PV plus Haushalt:    ECS3     (DK8P1006)
+   - Haushaltsverbrauch-Zähler:  none     (none)
+   - Energiespeicher-Zähler:     none     (none)
+   - PV-Zähler:                  SMA      (305148084)
+   - Hausanschluss-Zähler:       none     (none)
+   - Inselnetzoption:            NICHT installiert
+   - Inbetriebnahme-Datum:       20.12.2018 12:42
+   - ESS Typ:                    SiemensGen2
+ - Business controller läuft (PID: 23841)
+
+
+Watchdog status:
+
+Watchdog found running
+
+admin@2017-09-13-sdImage:~/bin$ 
+```
+
+### 2. Ein Kommando auf der Caterva ausfuehren
+
+Damit die CS Steuerung automatisch bei jedem Neustart der Caterva gestartet wird muesst ihr folgendes Kommado ausfuehren:
+
+`crontab CS_Steuerung_crontab`
+
+Das sieht dann wie folgt aus:
+
+```
+admin@2017-09-13-sdImage:~/bin$ crontab CS_Steuerung_crontab
+admin@2017-09-13-sdImage:~/bin$ 
+```
+
+### 3. Abmelden von der Caterva
+
+Die Caterva muss einmal neu gestartet werden, damit die CS Steuerung gestartet wird. Dabei werdet ihr von der Caterva abgemeldet und landet wirder auf der Pi.
+
+Dazu bitte das folgende Kommando eingeben:
+
+`sudo shutdown -r now`
+
+Das sieht dann wie folgt aus:
+
+```
+admin@2017-09-13-sdImage:~/bin$ sudo shutdown -r now
+Connection to caterva closed by remote host.
+Connection to caterva closed.
+pi@raspberrypi:~ $ 
+```
+
+So das war's.
+
+Die CS Steuerung ist mit Standard Parametern eingestellt, die ihr nicht zwingend veraendern muesst. Solltet ihr trotzdem die Parameter aendern wollen, dann hat Manuel dazu eine Oberflaeche im FHEM angelegt. Wie diese Oberflaeche zu bedinen ist findet ihr - so wie alle FHEM Infos von Manuel - [hier](https://github.com/meschnigm/fhem#business-optimum-und-cs_steuerung)
+
 ## Probleme / Fragen
 
 Bei Problemen oder Fragen bitte ein Issue anlegen: https://github.com/ac-caterva/webserver-public/issues/new/choose <br>
