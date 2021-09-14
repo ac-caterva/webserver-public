@@ -142,6 +142,7 @@ Dazu sind folgende Schritte notwendig:
 1. Anmelden auf der Caterva
 2. Ein Kommando auf der Caterva ausfuehren
 3. Abmelden von der Caterva
+4. CS Steuerung im FHEM integrieren
 
 Solltet ihr unsicher sein, dann meldet euch bitte wie im Kapitel **[Probleme / Fragen](https://github.com/ac-caterva/webserver-public#probleme--fragen)** beschrieben und wir helfen gerne.
 
@@ -232,9 +233,25 @@ Connection to caterva closed.
 pi@raspberrypi:~ $ 
 ```
 
-So das war's.
+### 4. CS Steuerung im FHEM integrieren
 
-Die CS Steuerung ist mit Standard Parametern eingestellt, die ihr nicht zwingend veraendern muesst. Solltet ihr trotzdem die Parameter aendern wollen, dann hat Manuel dazu eine Oberflaeche im FHEM angelegt. Wie diese Oberflaeche zu bedinen ist findet ihr - so wie alle FHEM Infos von Manuel - [hier](https://github.com/meschnigm/fhem#business-optimum-und-cs_steuerung)
+Die CS Steuerung ist mit Standard Parametern eingestellt, die du nicht zwingend veraendern musst. Solltest du trotzdem die Parameter aendern wollen, dann hat Manuel dazu eine Oberflaeche im FHEM angelegt. Fuehre folgendes Kommando auf der Pi aus um die Oberflaeche fuer die CS Steuerung im FHEM zu aktivieren:
+
+`FHEM_add_CS2Private.sh`
+
+Das sieht dann wie folgt aus:
+
+```
+pi@raspberrypi:~ $ FHEM_add_CS2Private.sh 
+CS_Steuerung wurde erfolgreich in FHEM integriert
+pi@raspberrypi:~ $ 
+```
+
+ &#10024; <br>
+ &#10024;  **So das war's.**<br>
+ &#10024; <br>
+
+ Wie diese Oberflaeche zu bedienen ist findest du - sowie alle FHEM Infos von Manuel - [hier](https://github.com/meschnigm/fhem#business-optimum-und-cs_steuerung)
 
 ## Probleme / Fragen
 

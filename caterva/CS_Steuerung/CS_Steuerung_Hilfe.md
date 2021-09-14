@@ -29,7 +29,7 @@ Veränderungen werden alle 10 Minuten geprüft und übernommen. (immer wenn die 
 Anlegen der Datei fuer die individuelle Konfiguration:
 
 ```
-cp /home/admin/bin/CS_Steuerung.txt /Home/admin/bin/CS_Steuerung.cfg
+cp /home/admin/bin/CS_Steuerung.txt /home/admin/bin/CS_Steuerung.cfg
 ```
 
 Verändern der individuellen Konfiguration:
