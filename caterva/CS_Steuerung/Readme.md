@@ -1,39 +1,10 @@
-UK
-Testen verändern der Schaltschwellen
+# Aktivieren der CS Steuerung auf der Caterva
 
-Habe auf die Spielwiese mal was zum testen gestellt.
-Oben im Script stehen ein paar Infos.
-Sicher noch viel Optimierungsbedarf, aber das man mal ein Gefühl bekommt auf was es ankommt.
-Schwellwerte kann man im Script über die Variablen anpassen.
+Alle Schritte sind im Github beschrieben. Du findest die Anleitung [hier](https://github.com/ac-caterva/webserver-public#cs-steuerung-aktivieren).
 
-![Bildschirmfoto vom 2021-04-05 09-58-15](https://user-images.githubusercontent.com/60625731/113552790-f338a000-95f6-11eb-9e95-d39fb83abbfe.png)
+# Ein paar grundlegende Befehle/Infos
 
+Es ist nicht mehr noetig Befehle einzugeben um die Protokolldatei anzusehen oder Aenderungen an der Konfiguration vorzunehmen. Manuel hat die CS Steuerung ins FHEM integriert. Du kannst mittels FHEM die Konfiguration der CS Steuerung aendern und du kannst dir die letzten Zeilen der Protokolldatei anzeigen lassen. Wie das funktioniert findest du [hier](https://github.com/meschnigm/fhem#readme)
 
-Ist inzwischen im Webserver Repository gelandet.
-# Ein paar grundlegende Befehle/Infos:
-Wenn das CS_Steuerungs.txt File im Verzeichnis /home/admin/bin liegt werden die Werte daraus genommen.
-Ist es nicht vorhanden werden default Werte genommen.
-Veränderungen werden alle 10 Minuten geprüft und übernommen. (immer wenn die Uhrzeit Minuten hinten 0 hat)
+Veränderungen an der Konfiguration werden alle 10 Minuten geprüft und übernommen -immer zur vollen Stunde, um 10 nach, um 20 nach, um halb und zo weiter.
 Die Veränderung wird im Logfile ausgegeben/dokumentiert.
-Anschauen Logfile:
-cat /var/log/CS_Steuerung_      2 mal Tabulator Taste drücken dann werden alle vorhanden Logfiles angezeit das aktuellste auwählen.
-cat /var/log/CS_Steuerung_2021-06-08_13-35.txt     enter
-
-Live mitschauen was ins Logfile geschrieben wird:
-tail -f /var/log/CS_Steuerung_      2 mal Tabulator Taste drücken dann werden alle vorhanden Logfiles angezeit das aktuellste auwählen.
-tail -f /var/log/CS_Steuerung_2021-06-08_13-35.txt   enter
-
-Anschauen Konfigfile:
-cat CS_Steuerungs.txt    enter       In der ersten Zeile stehen die Konfigurationen darunter was sie bedeuten.
-
-Verändern Konfigurationsfile:
-vi CS_Steuerungs.txt      enter     das File wird angezeigt 
-i                                   es wird in den Einfügemodus gewechselt
-mit den Pfeiltasten auf den zu ändernden Wert gehen und tippen, alte Werte löschen auf Syntax achten
-strg + c                            der Einfügemodus wird beendet
-:wq                                 das File abspeichern
-Wenn man sich nicht sicher ist oder man das File nicht abspeichern möchte
-strg + c                            der Einfügemodus wird beendet
-:q!                                 das File wird geschlossen und nicht abgespeichert
-
-Die Veränderung kann dann wie oben beschrieben überprüft werden.
