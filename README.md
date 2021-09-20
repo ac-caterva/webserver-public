@@ -140,7 +140,7 @@ Wenn eure Pi automatisch aktualisiert wird, dann koennt ihr die CS Steuerung auf
 Dazu sind folgende Schritte notwendig:
 
 1. Anmelden auf der Caterva
-2. Ein Kommando auf der Caterva ausfuehren
+2. Zwei Kommandos auf der Caterva ausfuehren
 3. Abmelden von der Caterva
 4. CS Steuerung im FHEM integrieren
 
@@ -203,7 +203,18 @@ Watchdog found running
 admin@2017-09-13-sdImage:~/bin$ 
 ```
 
-### 2. Ein Kommando auf der Caterva ausfuehren
+### 2. Zwei Kommandos auf der Caterva ausfuehren
+
+Die Berechtigung fuer die CS Steuerung setzen:
+
+` chmod 775 CS_Steuerung.sh`
+
+Das sieht dann wir folgt aus:
+
+```
+admin@2017-09-13-sdImage:~/bin$ chmod 775 CS_Steuerung.sh
+admin@2017-09-13-sdImage:~/bin$ 
+```
 
 Damit die CS Steuerung automatisch bei jedem Neustart der Caterva gestartet wird muesst ihr folgendes Kommado ausfuehren:
 
