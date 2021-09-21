@@ -254,6 +254,7 @@ Das sieht dann wie folgt aus:
 
 ```
 pi@raspberrypi:~ $ FHEM_add_CS2Private.sh 
+Restarte FHEM...
 CS_Steuerung wurde erfolgreich in FHEM integriert
 pi@raspberrypi:~ $ 
 ```
