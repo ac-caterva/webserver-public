@@ -13,6 +13,8 @@ else
 
     CS_InPrivtateCfg=`grep ./FHEM/00_CS_Steuerung.cfg /opt/fhem/FHEM/00_Private.cfg | wc -l`
     if [ ${CS_InPrivtateCfg} = 1 ]; then
+        echo "Restarte FHEM..."
+        sudo systemctl restart fhem
         echo "CS_Steuerung wurde erfolgreich in FHEM integriert"
     else
         echo "Es gab ein Problem. Bitte wende dich an das Technik Team."  
