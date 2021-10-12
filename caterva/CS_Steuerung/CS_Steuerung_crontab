@@ -7,5 +7,8 @@
 # CS Steuerung nach reboot starten
 @reboot /home/admin/bin/CS_SteuerungStarter.sh start
 #
+# Prozess "agetty --noclear" nach reboot beenden
+@reboot sleep 120 ; sudo kill -1 `ps -ef | grep agetty | awk '$9=="--noclear" {print $2}'`
+#
 # taegliche Ausfuehrung des log-rotate fuer log der CS_Steuerung
 00 0 * * * /home/admin/bin/CS_log-cleanup.sh
