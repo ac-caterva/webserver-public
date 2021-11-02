@@ -19,6 +19,7 @@
 # v20 2 func_maxPV Bedingung von 89 auf ${_SOCHYSTERESE_} gestellt, CS_Steuerung.cfg (persoenliche Konfig) und txt (default Konfig) gesplittet 
 # v21 Fehler Konfig wird alle 10 Minuten eingelesen, fasches File angegeben
 # v22 Datum bei Logfiles wieder rausgenommen, fuer Logrotaed webserver issues 33
+# v23 Ladelimit / Entladelimit auf 399 bis 9001
 
 _LOGFILE_=/var/log/CS_Steuerung.log
 # Logfilelink loeschen falls vorhaden und neu anlegen
@@ -67,18 +68,18 @@ if [ -f /home/admin/bin/CS_Steuerung.cfg ] ; then
 		fi
 		_SCHWELLEOBEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f3)
 		printf -v _SCHWELLEOBEN_ %.0f $_SCHWELLEOBEN_
-		if ( [ $_SCHWELLEOBEN_ -lt 500 ] || [ $_SCHWELLEOBEN_ -gt 6000 ] )
+		if ( [ $_SCHWELLEOBEN_ -lt 399 ] || [ $_SCHWELLEOBEN_ -gt 9001 ] )
 		then
-			echo "Schwelle ab wann eingespeichert wird muss zwischen 500 und 6000 Watt liegen ist ${_SCHWELLEOBEN_}! "  | tee -a ${_LOGFILE_}
+			echo "Schwelle ab wann eingespeichert wird muss zwischen 400 und 9000 Watt liegen ist ${_SCHWELLEOBEN_}! "  | tee -a ${_LOGFILE_}
 			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
 			func_Konfig_einlesen_default
 			return
 		fi
 		_SCHWELLEUNTEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f4)
 		printf -v _SCHWELLEUNTEN_ %.0f $_SCHWELLEUNTEN_
-		if ( [ $_SCHWELLEUNTEN_ -lt -6000 ] || [ $_SCHWELLEUNTEN_ -gt -500 ] )
+		if ( [ $_SCHWELLEUNTEN_ -lt -9001 ] || [ $_SCHWELLEUNTEN_ -gt -399 ] )
 		then
-			echo "Schwelle ab wann ausgespeichert wird muss zwischen -500 und -6000 Watt liegen ist ${_SCHWELLEUNTEN_}! " | tee -a ${_LOGFILE_}  
+			echo "Schwelle ab wann ausgespeichert wird muss zwischen -400 und -9000 Watt liegen ist ${_SCHWELLEUNTEN_}! " | tee -a ${_LOGFILE_}  
 			echo "Default Konfig verwendet CS_Steuerung.txt" | tee -a ${_LOGFILE_}
 			func_Konfig_einlesen_default
 			return
@@ -133,16 +134,16 @@ if [ -f /home/admin/bin/CS_Steuerung.txt ] ; then
 		fi
 		_SCHWELLEOBEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f3)
 		printf -v _SCHWELLEOBEN_ %.0f $_SCHWELLEOBEN_
-		if ( [ $_SCHWELLEOBEN_ -lt 500 ] || [ $_SCHWELLEOBEN_ -gt 6000 ] )
+		if ( [ $_SCHWELLEOBEN_ -lt 399 ] || [ $_SCHWELLEOBEN_ -gt 9001 ] )
 		then
-			echo "Schwelle ab wann eingespeichert wird muss zwischen 500 und 6000 Watt liegen ist ${_SCHWELLEOBEN_}! Abbruch"
+			echo "Schwelle ab wann eingespeichert wird muss zwischen 400 und 9000 Watt liegen ist ${_SCHWELLEOBEN_}! Abbruch"
 			func_exit
 		fi
 		_SCHWELLEUNTEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f4)
 		printf -v _SCHWELLEUNTEN_ %.0f $_SCHWELLEUNTEN_
-		if ( [ $_SCHWELLEUNTEN_ -lt -6000 ] || [ $_SCHWELLEUNTEN_ -gt -500 ] )
+		if ( [ $_SCHWELLEUNTEN_ -lt -9001 ] || [ $_SCHWELLEUNTEN_ -gt -399 ] )
 		then
-			echo "Schwelle ab wann ausgespeichert wird muss zwischen -500 und -6000 Watt liegen ist ${_SCHWELLEUNTEN_}! Abbruch"
+			echo "Schwelle ab wann ausgespeichert wird muss zwischen -400 und -9000 Watt liegen ist ${_SCHWELLEUNTEN_}! Abbruch"
 			func_exit
 		fi
 		_AUTOLADEN_=$(head -n 1 /home/admin/bin/CS_Steuerung.txt | cut -d ";" -f5)
