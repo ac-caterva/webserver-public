@@ -10,3 +10,6 @@
 * * * * * /var/caterva/scripts/update_Pi_and_Caterva.sh
 # every day, at 00:00, run log-rotate 
 00 0 * * * /home/pi/bin/log-cleanup.sh
+
+# caterva reporting
+*/10 * * * * python3 /var/caterva/caterva-reporting/collector.py >> /var/caterva/logs/collector.log 2>&1
