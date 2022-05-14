@@ -367,7 +367,7 @@ registerCodeSafAlm = [
     "SafAlm(31) -  ",
 ]
 
-privacyConsent = ["SN000", "SN000120"]
+privacyConsent = ["SN000", "SN000120", "SN000093"]
 
 
 def main():
