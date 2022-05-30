@@ -13,7 +13,7 @@ from os import path
 from pprint import pprint
 
 version = "1.2.0"
-
+privacyConsent = ["SN000", "SN000120", "SN000093", "SN000177"]
 
 # see https://github.com/ac-caterva/webserver-public/blob/main/pi/var/caterva/scripts/copy_log.sh
 class LogLine:
@@ -366,9 +366,6 @@ registerCodeSafAlm = [
     "SafAlm(30) -  ",
     "SafAlm(31) -  ",
 ]
-
-privacyConsent = ["SN000", "SN000120", "SN000093"]
-
 
 def main():
     print("starting caterva-collector in version " + version)
