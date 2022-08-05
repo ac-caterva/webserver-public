@@ -426,9 +426,11 @@ function func_laden ()
 
 function func_10Minuten_Abfragen ()
 {
-	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f2 | cut -c2)" == "0" -a "${_BMMTYPE_}" == "sony" ] ; then
+	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f2 | cut -c2)" == "0" ] ; then
+		if [ "${_BMMTYPE_}" == "sony" ] ; then
 		echo "Ausgabe Batteriemodule alle 10 Minuten!"
 		func_display_sony_modules
+		fi	
 		echo "Ausgabe Alarmemodule alle 10 Minuten!"
 		cat /tmp/alarm_messages | tee -a ${_LOGFILE_}
 		func_Konfig_einlesen
