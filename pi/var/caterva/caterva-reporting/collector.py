@@ -16,11 +16,20 @@ version = "1.2.0"
 privacyConsent = [
     "SN000",
     "SN000093",
+    "SN000099",
     "SN000120",
+    "SN000122",
+    "SN000135",
+    "SN000139",
+    "SN000149",
     "SN000154",
+    "SN000169",
     "SN000177",
     "SN000188",
     "SN000197",
+    "SN000198",
+    "SN000201",
+    "SN000231"
 ]
 
 # see https://github.com/ac-caterva/webserver-public/blob/main/pi/var/caterva/scripts/copy_log.sh
