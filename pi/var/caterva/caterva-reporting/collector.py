@@ -15,6 +15,7 @@ from pprint import pprint
 version = "1.2.0"
 privacyConsent = [
     "SN000",
+    "SN000038",
     "SN000093",
     "SN000099",
     "SN000120",
@@ -23,6 +24,7 @@ privacyConsent = [
     "SN000139",
     "SN000149",
     "SN000154",
+    "SN000160",
     "SN000169",
     "SN000177",
     "SN000188",
