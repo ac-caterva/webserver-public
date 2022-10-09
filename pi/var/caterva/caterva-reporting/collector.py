@@ -12,7 +12,7 @@ from prometheus_client.exposition import basic_auth_handler
 from os import path
 from pprint import pprint
 
-version = "1.2.0"
+version = "1.2.1"
 privacyConsent = [
     "SN000",
     "SN000027",
@@ -401,7 +401,8 @@ def main():
                 "selected directory 'sample-data'. collector is now in debug mode and is using sample-data"
             )
             debugMode = True
-    print("DEBUG-FLAG: " + str(debugMode))
+    if debugMode:
+        print("DEBUG-FLAG: " + str(debugMode))
     print("start collecting data")
 
     catchedLines = parseAllValues(debugMode)
@@ -447,6 +448,8 @@ def parseAllValues(debugMode):
             print("ABORT: " + sn + " has not underwriten the privacy consent!")
             catchedLines["error"] = "missing privacy consent"
             return catchedLines
+        else:
+            print(sn + " has a valid privacy consent")
         catchedLines["snValue"] = sn
 
         catchedLines["uptime"] = getFileValue("uptime", debugMode)
