@@ -15,6 +15,7 @@ from pprint import pprint
 version = "1.2.1"
 privacyConsent = [
     "SN000",
+    "SN000013",
     "SN000027",
     "SN000038",
     "SN000093",
