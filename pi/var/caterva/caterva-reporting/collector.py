@@ -1,12 +1,9 @@
-import os.path
 import configparser
-import socket
 import subprocess
 import sys
 import re
 import subprocess
 import datetime
-from typing import cast
 from prometheus_client import Gauge, CollectorRegistry, push_to_gateway
 from prometheus_client.exposition import basic_auth_handler
 from os import path
@@ -22,6 +19,7 @@ privacyConsent = [
     "SN000099",
     "SN000120",
     "SN000122",
+    "SN000134",
     "SN000135",
     "SN000139",
     "SN000149",
