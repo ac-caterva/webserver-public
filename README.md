@@ -15,7 +15,7 @@ Bitte gebt als Benutzer pi auf der Pi die folgenden Kommandos ein:
 
 ```bash
 cd /home/pi/Git-Clones/
-git clone git://github.com/ac-caterva/webserver-public.git
+git clone https://github.com/ac-caterva/webserver-public.git
 ```
 
 Damit erstellt ihr eine lokale Kopie des Repos auf der Pi.
