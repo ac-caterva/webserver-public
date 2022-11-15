@@ -64,10 +64,10 @@ function Check_FS_var_log ()
 
 function Check_number_of_invoiceLog ()
 {
-    echo -e "\n---Pruefe Anzahl invoiceLog Dateien < 200 "
+    echo -e "\n---Pruefe Anzahl invoiceLog Dateien < 270 "
     NUMBER_OF_invoiceLog=`ls -1 /var/log/invoiceLog.csv.* | wc -l`
 
-    if [ $NUMBER_OF_invoiceLog -lt 200 ] ; then
+    if [ $NUMBER_OF_invoiceLog -le 270 ] ; then
         Echo_ok
     else    
         Echo_nok
@@ -137,7 +137,7 @@ function Check_crontab ()
 
 function Check_etc_rclocal ()
 {
-    echo -e "\n---Pruefe /etc/rc.local"
+    echo -e "\n---Pruefe /etc/rc.local - Kommando iptables muss auskommentiert sein"
     COMMAND_EXISTS=`cat /etc/rc.local | grep -v "#" | grep "iptables"| wc -l`
 
     Command_should_not_run $COMMAND_EXISTS 
@@ -145,10 +145,14 @@ function Check_etc_rclocal ()
 
 function Check_date ()
 {
-    echo -e "\n---Pruefe Datum"
+    echo -e "\n---Pruefe das Datum"
     DATE=`date` 
-    echo -e "Pruefe das Datum:\033[0;32m $DATE . ENTER fuer weiter: \033[0m" 
+    Color_turkis_on
+    echo -n "   $DATE"
+    Color_green_on
+    echo -n " ENTER fuer weiter: " 
     read _ANSWER_
+    Color_off
 }
 
 function Warn_swarm_comm ()
@@ -162,12 +166,12 @@ function Warn_swarm_comm ()
 
 function Check_swarm_comm ()
 {
-    echo -e "\n---Pruefe Datei /etc/init.d/swarm-comm\n"
+    echo -e "\n---Pruefe Datei /etc/init.d/swarm-comm - Swarm Kommunikation sollte ausgeschaltet sein\n"
     Color_turkis_on
     head -19 /etc/init.d/swarm-comm
     Color_off
     Warn_swarm_comm
-    echo -e "\nPruefe die Datei. \033[0;32m ENTER fuer weiter: \033[0m" 
+    echo -ne "\nPruefe die Datei. \033[0;32m ENTER fuer weiter: \033[0m" 
     read _ANSWER_
 }
 
@@ -177,7 +181,7 @@ function Check_swarm_switch_on ()
     Color_turkis_on
     cat /etc/init.d/swarm-switch-on
     Color_off
-    echo -e "\nPruefe die Datei. \033[0;32m ENTER fuer weiter: \033[0m" 
+    echo -ne "\nPruefe die Datei. \033[0;32m ENTER fuer weiter: \033[0m" 
     read _ANSWER_
 
     echo -e "\n---Pruefe Verlinkungen auf /etc/init.d/swarm-switch-on"
@@ -185,7 +189,7 @@ function Check_swarm_switch_on ()
 
     if [ $NUM_FILES -eq 8 ] ; then
         Echo_ok
-    else    
+    else
         Echo_nok
     fi
 }
@@ -195,13 +199,52 @@ function Check_router ()
     bmmType=$(cat /home/admin/registry/out/bmmType)
     if [ "$bmmType" = "sony" ] ; then
         echo -e "\n---Pruefe Router Einstellungen\n\033[0;31m Sollte ein Passwort erfragt werden, dann bitte \033[0m admin01 \033[0;31m eingeben."
-        echo -e "\033[0;32m ENTER fuer weiter: \033[0m" 
+        echo -ne "\033[0;32m ENTER fuer weiter: \033[0m" 
         read _ANSWER_
+        Color_turkis_on
         ssh root@192.168.0.105 cat /root/monitor.config
-        echo -e "\nPruefe die Router Einstellungen.\033[0;32m \n ENTER fuer weiter: \033[0m" 
+        Color_off
+        echo -ne "\nPruefe die Router Einstellungen.\033[0;32m \n ENTER fuer weiter: \033[0m" 
         read _ANSWER_
     fi
 }
+
+function Check_prediction_problem ()
+{
+    echo -e "\n---Pruefe, ob es Probleme mit der Prediction/Extrapolation gibt"   
+    echo -e "\n---Erster Teil der Pruefung: ITCI1 Werte"  
+    Color_turkis_on
+    (echo "SwDER/ITCI1.E_HH_PA.setMag.f";sleep 0.3;echo "exit";) | netcat localhost 1337 | grep SwDER/ITCI1
+    (echo "SwDER/ITCI1.E_PV_PA.setMag.f";sleep 0.3;echo "exit";) | netcat localhost 1337 | grep SwDER/ITCI1
+    (echo "SwDER/ITCI1.E_BH_PA.setMag.f";sleep 0.3;echo "exit";) | netcat localhost 1337 | grep SwDER/ITCI1
+    (echo "SwDER/ITCI1.E_PB_PA.setMag.f";sleep 0.3;echo "exit";) | netcat localhost 1337 | grep SwDER/ITCI1
+    Color_off
+    echo -e "Pruefe, ob einer der Wert gleich 0 ist."
+    echo
+    echo -e "Sollte einer der Werte 0 sein, dann  muss das ITCI1 Script von Uli in die /etc/crontab aufgenommen werden"
+    echo -e "Siehe dazu https://github.com/ac-caterva/Technik/blob/master/docs/Business_Controller/Analyse/Anlage_laden_nicht_wg_prediction.md"
+    echo
+    Color_green_on
+    echo -ne "\033[0;32m ENTER fuer weiter: \033[0m"
+    read _ANSWER_
+
+
+    echo -e "\n---Zweiter Teil der Pruefung: Prediction im bin.zip"  
+    Color_turkis_on
+    echo -e "\n     Start: Teile der Prediction SW im bin.zip:"
+    Color_off
+    unzip -l /home/admin/release/bin.zip | grep --colour prediction
+    Color_turkis_on
+    echo -e "\n     Ende: Teile der Prediction SW im bin.zip:"
+    Color_off
+    echo -e "Pruefe, noch Prediction SW im bin.zip enthalten ist."
+    echo -e "Siehe dazu https://github.com/ac-caterva/Technik/blob/master/docs/Business_Controller/Analyse/Anlage_laden_nicht_wg_prediction.md"
+    echo
+    Color_green_on
+    echo -ne "\033[0;32m ENTER fuer weiter: \033[0m"
+    read _ANSWER_
+}
+
 #######################################
 # MAIN
 
@@ -217,6 +260,7 @@ Check_date
 Check_swarm_comm
 Check_swarm_switch_on
 Check_router
+Check_prediction_problem
 
 Color_green_on
 echo -e "\n ----Der Check ist beendet----"
