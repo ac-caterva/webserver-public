@@ -212,7 +212,23 @@ function Check_router ()
 function Check_prediction_problem ()
 {
     echo -e "\n---Pruefe, ob es Probleme mit der Prediction/Extrapolation gibt"   
-    echo -e "\n---Erster Teil der Pruefung: ITCI1 Werte"  
+   
+    echo -e "\n---Erster Teil der Pruefung: Prediction im bin.zip"  
+    Color_turkis_on
+    echo -e "\n     Start: Teile der Prediction SW im bin.zip:"
+    Color_off
+    unzip -l /home/admin/release/bin.zip | grep --colour prediction
+    Color_turkis_on
+    echo -e "\n     Ende: Teile der Prediction SW im bin.zip:"
+    Color_off
+    echo -e "Pruefe, noch Prediction SW im bin.zip enthalten ist."
+    echo -e "Siehe dazu https://github.com/ac-caterva/Technik/blob/master/docs/Business_Controller/Analyse/Anlage_laden_nicht_wg_prediction.md"
+    echo
+    Color_green_on
+    echo -ne "\033[0;32m ENTER fuer weiter: \033[0m"
+    read _ANSWER_
+
+    echo -e "\n---Zweiter Teil der Pruefung: ITCI1 Werte"  
     Color_turkis_on
     (echo "SwDER/ITCI1.E_HH_PA.setMag.f";sleep 0.3;echo "exit";) | netcat localhost 1337 | grep SwDER/ITCI1
     (echo "SwDER/ITCI1.E_PV_PA.setMag.f";sleep 0.3;echo "exit";) | netcat localhost 1337 | grep SwDER/ITCI1
@@ -222,22 +238,6 @@ function Check_prediction_problem ()
     echo -e "Pruefe, ob einer der Wert gleich 0 ist."
     echo
     echo -e "Sollte einer der Werte 0 sein, dann  muss das ITCI1 Script von Uli in die /etc/crontab aufgenommen werden"
-    echo -e "Siehe dazu https://github.com/ac-caterva/Technik/blob/master/docs/Business_Controller/Analyse/Anlage_laden_nicht_wg_prediction.md"
-    echo
-    Color_green_on
-    echo -ne "\033[0;32m ENTER fuer weiter: \033[0m"
-    read _ANSWER_
-
-
-    echo -e "\n---Zweiter Teil der Pruefung: Prediction im bin.zip"  
-    Color_turkis_on
-    echo -e "\n     Start: Teile der Prediction SW im bin.zip:"
-    Color_off
-    unzip -l /home/admin/release/bin.zip | grep --colour prediction
-    Color_turkis_on
-    echo -e "\n     Ende: Teile der Prediction SW im bin.zip:"
-    Color_off
-    echo -e "Pruefe, noch Prediction SW im bin.zip enthalten ist."
     echo -e "Siehe dazu https://github.com/ac-caterva/Technik/blob/master/docs/Business_Controller/Analyse/Anlage_laden_nicht_wg_prediction.md"
     echo
     Color_green_on
