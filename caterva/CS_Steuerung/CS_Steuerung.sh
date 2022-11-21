@@ -20,6 +20,7 @@
 # v21 Fehler Konfig wird alle 10 Minuten eingelesen, fasches File angegeben
 # v22 Datum bei Logfiles wieder rausgenommen, fuer Logrotaed webserver issues 33
 # v23 Ladelimit / Entladelimit auf 399 bis 9001
+# v24 bmmType - lowercase 
 
 _LOGFILE_=/var/log/CS_Steuerung.log
 # Logfilelink loeschen falls vorhaden und neu anlegen
@@ -465,7 +466,7 @@ fi
 # Konfig einlesen aus File oder default
 func_Konfig_einlesen
 _SOCDCSPRUNG_=no
-_BMMTYPE_=$(cat /home/admin/registry/out/bmmType)
+_BMMTYPE_=$(cat /home/admin/registry/out/bmmType | sed 's/[A-Z]/\L&/g')
 
 func_cleanup_files
 
