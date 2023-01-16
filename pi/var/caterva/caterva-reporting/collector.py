@@ -19,6 +19,7 @@ privacyConsent = [
     "SN000099",
     "SN000120",
     "SN000122",
+    "SN000127",
     "SN000134",
     "SN000135",
     "SN000138",
@@ -34,7 +35,9 @@ privacyConsent = [
     "SN000197",
     "SN000198",
     "SN000201",
-    "SN000231"
+    "SN000227",
+    "SN000231",
+    "SN000245"
 ]
 
 # see https://github.com/ac-caterva/webserver-public/blob/main/pi/var/caterva/scripts/copy_log.sh
