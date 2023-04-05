@@ -7,9 +7,12 @@ import datetime
 from prometheus_client import Gauge, CollectorRegistry, push_to_gateway
 from prometheus_client.exposition import basic_auth_handler
 from os import path
-from pprint import pprint
+import logging
 
-version = "1.2.1"
+
+logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', level=logging.DEBUG)
+
+version = "1.2.2"
 privacyConsent = [
     "SN000",
     "SN000013",
@@ -72,7 +75,7 @@ class LogLine:
             self.rechargeByPowerWatt = parsedLogLine[28]  # Zwangsnachladung
             self.avgLoad = parsedLogLine[47]  # Systemlast
         except IndexError:
-            print("Oh no! Failed to parse logfile")
+            logging.warn("Oh no! Failed to parse logfile")
             raise
 
 
@@ -394,47 +397,45 @@ registerCodeSafAlm = [
 
 
 def main():
-    print("starting caterva-collector in version " + version)
+    logging.info("starting caterva-collector in version " + version)
     debugMode = False
     if path.exists("sample-data"):
         if len(sys.argv) >= 2:
-            print("second commandline argument detected. ignoring debug-mode.")
+            logging.debug("second commandline argument detected. ignoring debug-mode.")
             debugMode = False
         else:
-            print(
+            logging.debug(
                 "selected directory 'sample-data'. collector is now in debug mode and is using sample-data"
             )
             debugMode = True
     if debugMode:
-        print("DEBUG-FLAG: " + str(debugMode))
-    print("start collecting data")
+        logging.debug("DEBUG-FLAG: " + str(debugMode))
+    logging.info("start collecting data")
 
     catchedLines = parseAllValues(debugMode)
 
-    print("===================")
-    print("collected entrys:")
-    pprint(catchedLines)
-    print("===================")
+    #print("===================")
+    #print("collected entrys:")
+    #pprint(catchedLines)
+    #print("===================")
 
     if catchedLines["error"] == False:
-        print("sending data to gateway..")
+        logging.info("sending data to gateway..")
 
         registry = createCatervaMetrics(catchedLines)
         sendRegistry(registry)
 
-        print("finshed. exiting..")
-        print()
-        print()
+        logging.info("successfully send. exiting..")
     else:
         if "snValue" in catchedLines and catchedLines["snValue"] != "":
-            print("try to send error")
+            logging.warn("try to send error")
 
             registry = createCatervaMetrics(catchedLines)
             sendRegistry(registry)
-            print("error was pushed for " + catchedLines["snValue"])
+            logging.warn("error was pushed for " + catchedLines["snValue"])
         else:
-            print(
-                "The SN value could also not be determined. Can therefore also not send a status to the server. No data has been sent"
+            logging.error(
+                "The SN value could also not be determined. Can therefore also not send a status to the server. No data has been sent!"
             )
         sys.exit(-1)
 
@@ -447,13 +448,13 @@ def parseAllValues(debugMode):
 
         # Other Parameter
         sn = getFileValue("snValue", debugMode)
-        print("check privacy consent for sn " + sn)
+        logging.debug("check privacy consent for sn " + sn)
         if sn not in privacyConsent:
-            print("ABORT: " + sn + " has not underwriten the privacy consent!")
+            logging.error(sn + " has not underwriten the privacy consent!")
             catchedLines["error"] = "missing privacy consent"
             return catchedLines
         else:
-            print(sn + " has a valid privacy consent")
+            logging.info(sn + " has a valid privacy consent")
         catchedLines["snValue"] = sn
 
         catchedLines["uptime"] = getFileValue("uptime", debugMode)
@@ -463,10 +464,10 @@ def parseAllValues(debugMode):
         catchedLines["InitSTVAl"] = getFileValue("InitSTVAl", debugMode)
 
         if catchedLines["batteryType"] == "SAFT":
-            print("Skipping BMM, since type is SAFT")
+            logging.info("Skipping BMM, since type is SAFT")
             catchedLines["reg_mod"] = {}
         else:
-            print("Collecting BMM..")
+            logging.debug("Collecting BMM..")
             catchedLines["reg_mod"] = parseBMUTable(getFileValue("Reg_Mod", debugMode))
 
         # cs steuerung
@@ -516,9 +517,10 @@ def parseAllValues(debugMode):
             registerCodeSafAlm, getFileValue("Reg_SafAlm", debugMode)
         )
 
-        print("successfully collected vars")
+        logging.debug("successfully collected vars")
     except Exception as e:
         print(e)
+        logging.warn(e)
         catchedLines["error"] = True
         catchedLines["scriptError"] = e
 
@@ -534,12 +536,12 @@ def getErrorCode(registerCodeMap, flag):
             try:
                 codes.append(registerCodeMap[index])
             except IndexError:
-                print(
+                logging.warn(
                     "[WARNUNG] Konnte den Registerwert an der Stelle "
                     + (index)
                     + " nicht mappen."
                 )
-                print(registerCodeMap)
+                logging.warn(registerCodeMap)
     return codes
 
 
@@ -559,10 +561,10 @@ def mapBatType(value):
 
 
 def sendRegistry(registry):
-    print("===================")
-    print("sending following metrics:")
-    pprint(dumpMetricsWithLabel(registry))
-    print("===================")
+    #print("===================")
+    #print("sending following metrics:")
+    #pprint(dumpMetricsWithLabel(registry))
+    #print("===================")
 
     push_to_gateway(
         "https://gateway.caterva.fuchs-informatik.de",
@@ -599,13 +601,13 @@ def getCatervaLogLine(debugMode):
     if debugMode:
         fileHandle = "sample-data/ess-logfile.txt"
     try:
-        print("try to open " + fileHandle)
+        logging.debug("try to open " + fileHandle)
         fileHandle = open(fileHandle, "r")
         lineList = fileHandle.readlines()
         fileHandle.close()
     except FileNotFoundError:
-        print(
-            "Achtung: Datei '"
+        logging.error(
+            "Datei '"
             + fileHandle
             + "' konnte nicht gefunden werden! Collector wird beendet!"
         )
@@ -619,7 +621,7 @@ def getFileValue(attribute, debugMode):
     if debugMode:
         if hasattr(debugMode, "__getitem__"):
             override_value = debugMode[attribute]
-            print("WARN: Override value '" + attribute + "'")
+            logging.warn("Override value '" + attribute + "'")
             return override_value
         if attribute == "Reg_Mod":
             txt = ""
@@ -634,17 +636,17 @@ def getFileValue(attribute, debugMode):
             ret = subprocess.run(
                 ["ssh", "admin@caterva", configs[2]], capture_output=True
             )
-            print(ret)
+            logging.debug(ret)
             stdout = ret.stdout.decode("ascii").rstrip()
-            print(stdout)
+            logging.debug(stdout)
             return stdout
         if configs[1] == "nc":
             ret = subprocess.run(configs[2], shell=True, capture_output=True)
-            print(ret)
+            logging.debug(ret)
             stdout = ret.stdout.decode("ascii").rstrip()
-            print(stdout)
+            logging.debug(stdout)
             return stdout
-        print("Achtung: Typ nicht gefunden")
+        logging.warn("Achtung: Typ nicht gefunden")
         return "WARNUNG: Nicht gefunden"
 
 
