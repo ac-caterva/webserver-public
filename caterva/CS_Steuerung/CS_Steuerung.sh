@@ -2,7 +2,7 @@
 # Testscript fur Optimierung Schaltschwellen
 # kein Eingriff ins System shutdown etc
 # große Testintervalle kleine Last?
-# v6 maxpv 100 enn der SOC bei 90 ist es zwischen 13:00 und 13:59 uhr ist und die Module 4 Prozent auseinder sind mit pvstrom laden auf 100 %
+# v6 maxpv 100 enn der SOC bei 90 ist es zwischen 12:00 und 12:59 uhr ist und die Module 4 Prozent auseinder sind mit pvstrom laden auf 100 %
 # v7 Prozesse agetty killen, Alarme alle 10 Minuten, batterie alle 10 Minuten, bmm restart  
 # v8 auch maxpv100 wenn Modul auf 9 springt
 # v9 Ausgaben in log erweitert und korrket timestamp logfile
@@ -20,8 +20,15 @@
 # v21 Fehler Konfig wird alle 10 Minuten eingelesen, fasches File angegeben
 # v22 Datum bei Logfiles wieder rausgenommen, fuer Logrotaed webserver issues 33
 # v23 Ladelimit / Entladelimit auf 399 bis 9001
-# v24 bmmType - lowercase 
+# v24 bmmType - lowercase
+# v25 Automatisches Laden mit pv anstossen CS_Steuerung_laden_pv.txt, laden anstoßen aus dem Netz CS_Steuerung_laden_netz.txt Leistung;Dauer;Reset (yes) im File. 
+#     Erweiterte Ausgaben im Log. Laden nur starten wenn mehr wie 1500 Watt vorhanden sind.
+# v26 Messintervall von fest 60 Sekunden auf konfigurierbar zwischen 10 und 60 Sekunden. Feld 1 in neuer Konfig Datei CS_Steuerung_V26.cfg. Datei ist optional.
+# 	  Neuer Parameter _WPBETRIEBSSTATUS_. Reagiert auf das Vorhandensein der Datei /tmp/CS_StrgWP. Wenn /tmp/CS_StrgWP vorhanden, dann ist die WP eingeschaltet.
+#     Wenn die WP eingeschaltet ist, dann wird nicht eingespeichert.
 
+# tool laden das swarmBc Kommandos gehen
+source /home/admin/bin/loadTools
 _LOGFILE_=/var/log/CS_Steuerung.log
 # Logfilelink loeschen falls vorhaden und neu anlegen
 if [ -L /home/admin/bin/CS_Steuerung.log ] ; then
@@ -32,21 +39,43 @@ _CS_STRG_INVOICELOG=/tmp/CS_Strg_invoiceLog.csv
 _CS_STRG_BATTERYLOG=/tmp/CS_Strg_batteryLog.csv
 
 echo "Mit dem Befehl cat CS_Steuerung_Hilfe.txt lesen" | tee -a ${_LOGFILE_}
-echo "ES wird der Duchschnitt der letzten 60 Sekundne gebildet, dieser Wert wird dann mit den in Variablen gesetzten Werten verglichen." | tee -a ${_LOGFILE_}
+echo "ES wird der Duchschnitt der mittels Intervall definierten Zeitraums gebildet (default 60 Sekunden), dieser Wert wird dann mit den in Variablen gesetzten Werten verglichen." | tee -a ${_LOGFILE_}
 echo "Variable ab wann eingespeichert wird _SCHWELLEOBEN_" | tee -a ${_LOGFILE_}
 echo "Variable ab wann ausgespeichert wird _SCHWELLEUNTEN_" | tee -a ${_LOGFILE_}
 echo "Bei jedem Start wird ein Logfile unter /var/log/CS_Steuerung_YYYY-mm-dd_HH-MM.txt angelegt mit Start Datum/Uhrzeit." | tee -a ${_LOGFILE_}
 echo "Wenn BO laeuft wird abgebrochen um Wechselwirkunken zu vermeiden." | tee -a ${_LOGFILE_}
 echo "SOC Hysterese nach oben wenn einmal 90 erreicht wirde erst unter 87 wieder eingespeichert." | tee -a ${_LOGFILE_}
-echo "Bei Sony-Anlagen wird wenn der SOC bei 90 ist es zwischen 13:00 und 13:59 uhr ist und die Module 4 Prozent auseinder sind mit pvstrom laden auf 100 %," | tee -a ${_LOGFILE_} 
+echo "Bei Sony-Anlagen wird wenn der SOC bei 90 ist es zwischen 12:00 und 12:59 uhr ist, mehr wie 1500 Watt PV Strom vorhanden und die Module 4 Prozent auseinder sind mit pvstrom laden auf 100 %," | tee -a ${_LOGFILE_} 
 echo "oder wenn Module auf 10 % springen. Diese automatische laden muss mit der Variable _AUTOLADEN_=ja im Script gesetzt werden!" | tee -a ${_LOGFILE_}
 echo " " | tee -a ${_LOGFILE_}
 
 ########################################
 # Konfigwerte ueber File auslesen beim Starten des Scripts und alle 10 Minuten falls es geaendert wird 
+# Pruefen ob Files /home/admin/bin/CS_Steuerung_v26.cfg existiert, wenn ja die Werte verwenden ansonsten Defaultwerte verwenden.
 # Pruefen ob Files /home/admin/bin/CS_Steuerung.cfg existiert, wenn ja die Werte verwenden ansonsten Defaultwerte verwenden.
 function func_Konfig_einlesen() 
 {
+if [ -f /home/admin/bin/CS_Steuerung_v26.cfg ] ; then
+	if [ ! "$(head -n 1 /home/admin/bin/CS_Steuerung_v26.cfg)" == "${_KONFIG_V26_}" ] ; then
+		_INTERVALL_=$(head -n 1 /home/admin/bin/CS_Steuerung_v26.cfg | cut -d ";" -f1)
+		echo "Parameter aus Konfigfile (v26) gelesen:" | tee -a ${_LOGFILE_}
+		[ -z $_INTERVALL_ ] && _INTERVALL_=60   # Defaultwert, wenn nicht in Konfigurationsdatei angegeben
+		printf -v _INTERVALL_ %.0f $_INTERVALL_
+		if ( [ $_INTERVALL_ -lt 10 ] || [ $_INTERVALL_ -gt 60 ] ); then
+			echo "Intervall muss zwischen 10 und 60 Sekunden liegen ist ${_INTERVALL_}! "  | tee -a ${_LOGFILE_}
+			echo "Default Wert von 60 Sekunden wird verwendet" | tee -a ${_LOGFILE_}
+			_INTERVALL_=60
+		fi
+		echo "Interval: ${_INTERVALL_}" | tee -a ${_LOGFILE_}
+	fi	
+	_KONFIG_V26_=$(head -n 1 /home/admin/bin/CS_Steuerung_v26.cfg)
+else 
+	# Kein Konfigfile /home/admin/bin/CS_Steuerung_v26.cfg vohanden Defaultwerte verwenden. 
+	_INTERVALL_=60
+fi
+_INTERVALL_SLEEP_=$(echo "${_INTERVALL_} - 1.4" | bc -l)
+
+
 if [ -f /home/admin/bin/CS_Steuerung.cfg ] ; then
 	if [ ! "$(head -n 1 /home/admin/bin/CS_Steuerung.cfg)" == "${_KONFIG_}" ] ; then
 		_SOCMAX_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg | cut -d ";" -f1)
@@ -107,7 +136,7 @@ if [ -f /home/admin/bin/CS_Steuerung.cfg ] ; then
 		_KONFIG_=$(head -n 1 /home/admin/bin/CS_Steuerung.cfg)
 	fi
 else
-	echo "Kein Konfigile /home/admin/bin/CS_Steuerung.txt vohanden Defaultwerte verwenden." | tee -a ${_LOGFILE_}
+	echo "Kein Konfigile /home/admin/bin/CS_Steuerung.cfg vohanden Defaultwerte verwenden." | tee -a ${_LOGFILE_}
 	func_Konfig_einlesen_default
 fi
 }
@@ -158,6 +187,7 @@ if [ -f /home/admin/bin/CS_Steuerung.txt ] ; then
 			func_exit
 		 ;;
 		esac
+		
 		echo "Parameter aus Konfigfile gelesen:" | tee -a ${_LOGFILE_}
 		echo "SOC Maximalwert eingestellt ${_SOCMAX_}" | tee -a ${_LOGFILE_}
 		echo "SOC Hysterese eingestellt ${_SOCHYSTERESE_}" | tee -a ${_LOGFILE_}
@@ -266,9 +296,11 @@ function func_read_SoC_sony_modules()
 # - _INVSTATUS_   : Aktueller Status des Inverters 
 # - _SOCDC_       : Aktueller SoC(DC) der Batteriemodule
 # - _SOCDCSPRUNG_ : SoC(DC) kleiner oder gleich 10% ? yes/no
+# Daten aus weiteren Dateien
+# - _WPBETRIEBSSTATUS_ : WP eingeschaltet? on/off
 function func_Daten_holen ()
 {
-	tail -60 /var/log/invoiceLog.csv | grep -v a > $_CS_STRG_INVOICELOG
+	tail -${_INTERVALL_} /var/log/invoiceLog.csv | grep -v a > $_CS_STRG_INVOICELOG
 	tail -2 /var/log/batteryLog.csv | grep -v '^#' | tail -1 > $_CS_STRG_BATTERYLOG
 
 	_DURCHSHH_=$(awk -F ";" 'BEGIN { lines=0; total=0 } { lines++; total+=$15 } END { print total/lines }' "$_CS_STRG_INVOICELOG" )
@@ -292,13 +324,43 @@ function func_Daten_holen ()
 	        echo "${_AKTTIME_} _SOCDCSPRUNG_ wird gesetzt _SOCDC_ = ${_SOCDC_}" | tee -a ${_LOGFILE_} 
 		_SOCDCSPRUNG_=yes
 	fi
+        if ( [ -f /tmp/CS_Steuerung_laden_pv.txt ] ) ; then
+		echo "${_AKTTIME_} _SOCDCLADENPV_ wird gesetzt _SOCDC_ = ${_SOCDC_}" | tee -a ${_LOGFILE_} 
+		_SOCDCLADENPV_=yes
+		rm /tmp/CS_Steuerung_laden_pv.txt
+	fi
+        if ( [ -f /tmp/CS_Steuerung_laden_netz.txt ] ) ; then
+		_SOCDCLADENNETZPOWER_=$(head -n 1 /tmp/CS_Steuerung_laden_netz.txt | cut -d ";" -f1)
+	        _SOCDCLADENNETZDURATION_=$(head -n 1 /tmp/CS_Steuerung_laden_netz.txt | cut -d ";" -f2)
+		_SOCDCLADENNETZRESET_=$(head -n 1 /tmp/CS_Steuerung_laden_netz.txt | cut -d ";" -f3)
+		if [ ${_SOCDCLADENNETZPOWER_} -ge 200 -a ${_SOCDCLADENNETZPOWER_} -le 5000 -a ${_SOCDCLADENNETZDURATION_} -ge 100 -a ${_SOCDCLADENNETZDURATION_} -le 7200 ] ; then
+			echo "${_AKTTIME_} _SOCDCLADENNETZPOWER_ wird gesetzt" | tee -a ${_LOGFILE_} 
+			_SOCDCLADENNETZ_=yes
+			rm /tmp/CS_Steuerung_laden_netz.txt
+		else
+		echo "${_AKTTIME_} Fileinput nicht korrekt /tmp/CS_Steuerung_laden_netz.txt" | tee -a ${_LOGFILE_}
+		fi
+	fi
+	if ( [ -f /tmp/CS_StrgWP ] ) ; then
+		_WPBETRIEBSSTATUS_=on
+	else
+		_WPBETRIEBSSTATUS_=off
+	fi 
 }
 
 function func_setzten_einausspeichern ()
 {
-	if [ ${_DURCHSPVHH_} -gt ${_SCHWELLEOBEN_} -o  ${_DURCHSPVHH_} -lt ${_SCHWELLEUNTEN_} ] ; then
+	if [ ${_DURCHSPVHH_} -gt ${_SCHWELLEOBEN_} ] ; then
+		if [ $_WPBETRIEBSSTATUS_ = "on" ] ; then
+			echo "ein/ausspeichern blockiert, weil WP in Betrieb" | tee -a ${_LOGFILE_}
+			func_touch_noPVBuffering
+		else
+			echo "Normal Betrieb" | tee -a ${_LOGFILE_} 
+			func_rm_noPVBuffering
+		fi
+	elif [ ${_DURCHSPVHH_} -lt ${_SCHWELLEUNTEN_} ] ; then
 		echo "Normal Betrieb" | tee -a ${_LOGFILE_} 
-		func_rm_noPVBuffering
+		func_rm_noPVBuffering	
 	else
 		echo "ein/ausspeichern blockiert" | tee -a ${_LOGFILE_}
 		func_touch_noPVBuffering
@@ -336,7 +398,7 @@ function func_Hysterese_Einspeichern ()
 
 function func_maxPV_unterschied ()
 {
-	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "13" -a "${_BMMTYPE_}" == "sony" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} ] ; then 
+	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "12" -a "${_BMMTYPE_}" == "sony" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} ] ; then 
 		_SOCMODULEALL_=$(func_read_SoC_sony_modules)	
 		_SOCMODULEMAX_=890
 		for i in ${_SOCMODULEALL_}
@@ -367,11 +429,48 @@ function func_maxPV_unterschied ()
 
 function func_maxPV_sprung ()
 {
-	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "13" -a "${_BMMTYPE_}" == "sony" -a "${_SOCDCSPRUNG_}" == "yes" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} ] ; then 	
+	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "12" -a "${_BMMTYPE_}" == "sony" -a "${_SOCDCSPRUNG_}" == "yes" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} -a ${_DURCHSPVHH_} -ge 1500 ] ; then 	
 		echo "Aufladen auf 100 Prozent gestartet da Module auf 10 Prozent oder darunter waren." | tee -a ${_LOGFILE_}	 
 		func_laden
 		_SOCDCSPRUNG_=no	
 	fi	
+        if [[ "$_SOCDCSPRUNG_" == "yes" ]] ; then	
+		echo "${_AKTTIME_} _SOCDCSPRUNG_ ist gesetzt es wir nachgeladen bei 1500 Watt zwischen 12:00 - 12:59 Uhr SOC größer ${_SOCHYSTERESE_}" | tee -a ${_LOGFILE_}
+	fi
+}
+
+function func_maxPV_laden_pv ()
+{
+	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1)" == "12" -a "${_BMMTYPE_}" == "sony" -a "${_SOCDCLADENPV_}" == "yes" -a ${_SOCDC_} -ge ${_SOCHYSTERESE_} -a ${_DURCHSPVHH_} -ge 1500 ] ; then 	
+		echo "Aufladen auf 100 Prozent gestartet da das File /tmp/CS_Steuerung_laden_pv.txt gesetzt war." | tee -a ${_LOGFILE_}	 
+		func_laden
+		_SOCDCLADENPV_=no	
+	fi	
+        if [[ "$_SOCDCLADENPV_" == "yes" ]] ; then	
+		echo "${_AKTTIME_} File /tmp/CS_Steuerung_laden_pv.txt war gesetzt es wir nachgeladen bei 1500 Watt zwischen 12:00 - 12:59 Uhr SOC größer ${_SOCHYSTERESE_}" | tee -a ${_LOGFILE_}
+	fi
+}
+
+function func_maxPV_laden_netz ()
+{
+	if [ "${_SOCDCLADENNETZ_}" == "yes" ] ; then 	
+		echo "Aufladen aus dem Netz mit ${_SOCDCLADENNETZPOWER_} Watt und ${_SOCDCLADENNETZDURATION_} Sekunden lang" | tee -a ${_LOGFILE_}	 
+	        if [ ! -f /home/admin/registry/noPVBuffering ] ; then
+       			 echo "touch /home/admin/registry/noPVBuffering" | tee -a ${_LOGFILE_}
+       			 touch /home/admin/registry/noPVBuffering
+        	fi
+		swarmBcSend CPOL1.Wchrg.setMag.f=${_SOCDCLADENNETZPOWER_} | tee -a ${_LOGFILE_}
+		swarmBcSend CPOL1.OffsetDuration.setVal=${_SOCDCLADENNETZDURATION_} | tee -a ${_LOGFILE_}
+		swarmBcSend CPOL1.OffsetStart.setVal=$(date +%s) | tee -a ${_LOGFILE_}
+		_SOCDCLADENNETZ_=no
+		sleep ${_SOCDCLADENNETZDURATION_}s
+		if [ "${_SOCDCLADENNETZRESET_}" == "yes" ] ; then
+			echo "Reset des BMM nach dem Laden angefordert" | tee -a ${_LOGFILE_}
+			swarmBcResetBmm 2 &> /dev/null   <<< j	
+		else
+			echo "Kein Reset des BMM nach dem Laden angefordert" | tee -a ${_LOGFILE_}			
+		fi
+	fi
 }
 
 function func_laden ()
@@ -427,14 +526,21 @@ function func_laden ()
 
 function func_10Minuten_Abfragen ()
 {
+	# _AKTIME_ Format: 18/02/2023 15:10:47
 	if [ "$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f2 | cut -c2)" == "0" ] ; then
-		if [ "${_BMMTYPE_}" == "sony" ] ; then
-		echo "Ausgabe Batteriemodule alle 10 Minuten!"
-		func_display_sony_modules
-		fi	
-		echo "Ausgabe Alarmemodule alle 10 Minuten!"
-		cat /tmp/alarm_messages | tee -a ${_LOGFILE_}
-		func_Konfig_einlesen
+		_AKT_10Min_TIME_="$(echo ${_AKTTIME_} | cut -d " " -f2 | cut -d : -f1,2)"
+		if [ "${_AKT_10Min_TIME_}" == "${_OLD10MinTIME_}" ] ; then
+			return
+		else 
+			_OLD10MinTIME_=$_AKT_10Min_TIME_
+			if [ "${_BMMTYPE_}" == "sony" ] ; then
+				echo "Ausgabe Batteriemodule alle 10 Minuten!"
+				func_display_sony_modules
+			fi	
+				echo "Ausgabe Alarmemodule alle 10 Minuten!"
+				cat /tmp/alarm_messages | tee -a ${_LOGFILE_}
+				func_Konfig_einlesen
+		fi
 	fi	
 }
 
@@ -468,6 +574,7 @@ func_Konfig_einlesen
 _SOCDCSPRUNG_=no
 _BMMTYPE_=$(cat /home/admin/registry/out/bmmType | sed 's/[A-Z]/\L&/g')
 
+
 func_cleanup_files
 
 while true
@@ -486,9 +593,11 @@ do
 	if [[ "${_AUTOLADEN_}" == "ja" ]] ; then
 		func_maxPV_unterschied
 		func_maxPV_sprung
+		func_maxPV_laden_pv
+		func_maxPV_laden_netz
 	fi
 	_STOP_="leer"
 	func_10Minuten_Abfragen
-	sleep 58.6
+	sleep $_INTERVALL_SLEEP_
 done
 

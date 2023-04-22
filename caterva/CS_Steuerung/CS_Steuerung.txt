@@ -1,9 +1,8 @@
-90;87;3000;-1500;nein
-# Erste Spalte bis zu diesem Wert soll der Speicher geladen werden	50 - 90                          default: 90
-# Zweite Spalte bis zu diesem Wert geht die entladehystere, muss kleiner sein wie erste Spalte           default: 87
+90;87;3000;-1500;nein;
+# Erste Spalte bis zu diesem Wert soll der Speicher geladen werden	50 - 90                      default: 90
+# Zweite Spalte bis zu diesem Wert geht die entladehystere, muss kleiner sein wie erste Spalte   default: 87
 # Dritte Spalte ab diesem Wert in Watt beginnt die Anlage mit einspeichern		                 default: 3000
-# Vierte Spalte ab diesem Wert in Watt beginnt die Anlage zum ausspeichern Minuswert 	                 default: -1500
-# Fuenfte Spalte Automatisches balancen der Module nur bei Sony Anlagen ja/nein                          default: nein
-
+# Vierte Spalte ab diesem Wert in Watt beginnt die Anlage zum ausspeichern Minuswert 	         default: -1500
+# Fuenfte Spalte Automatisches balancen der Module nur bei Sony Anlagen ja/nein                  default: nein
 
 # ACHTUNG dieses FILE nie veraendern ist die Fallback Konfiguration
