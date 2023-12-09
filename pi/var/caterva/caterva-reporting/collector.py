@@ -633,22 +633,28 @@ def getFileValue(attribute, debugMode):
         config.read("sample-data/dummy-values.properties")
         return config.get("General", configs[0])
     else:
-        if configs[1] == "ssh":
-            ret = subprocess.run(
-                ["ssh", "admin@caterva", configs[2]], capture_output=True
-            )
-            logging.debug(ret)
-            stdout = ret.stdout.decode("ascii").rstrip()
-            logging.debug(stdout)
-            return stdout
-        if configs[1] == "nc":
-            ret = subprocess.run(configs[2], shell=True, capture_output=True)
-            logging.debug(ret)
-            stdout = ret.stdout.decode("ascii").rstrip()
-            logging.debug(stdout)
-            return stdout
-        logging.warn("Achtung: Typ nicht gefunden")
-        return "WARNUNG: Nicht gefunden"
+        try:
+            if configs[1] == "ssh":
+                ret = subprocess.run(
+                    ["ssh", "admin@caterva", configs[2]], capture_output=True
+                )
+                logging.debug(ret)
+                stdout = ret.stdout.decode("utf8").rstrip()
+                logging.debug(stdout)
+                return stdout
+            if configs[1] == "nc":
+                ret = subprocess.run(configs[2], shell=True, capture_output=True)
+                logging.debug(ret)
+                stdout = ret.stdout.decode("utf8").rstrip()
+                logging.debug(stdout)
+                return stdout
+            logging.warn("Achtung: Typ nicht gefunden")
+            return "WARNUNG: Nicht gefunden"
+        except Exception as e:
+            logging.warn("ERROR: Failed to run nc/ssh command for '" + attribute + "'")
+            logging.warn(e)
+            execptionText = repr(e)
+            raise Exception("Failed to run nc/ssh command for '" + attribute + "': " + execptionText)
 
 
 def basicAuthHandler(url, method, timeout, headers, data):
